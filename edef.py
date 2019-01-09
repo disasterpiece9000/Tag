@@ -40,9 +40,9 @@ class Game:
 		
 	def offerRole(game, user):
 		if user == game.master:
-			user.message('Would you like to play a game?', 'You have been randomly selected to play the role of Master in this round of Tag. To accept this invitation, reply to this message with !accept. To reject this invitation, reply with !reject. If no response is recieved within 24 hours, another user will be selected.')
+			user.message('Would you like to play a game?', 'You have been randomly selected to play the role of Master in this round of Tag. To accept this invitation, reply to this message with !accept. To reject this invitation, reply with !reject. If no response is recieved within 24 hours, another user will be selected. \n\n[View the rules here](https://www.reddit.com/r/edefinition/comments/9v31ym/would_you_like_to_play_a_game/)')
 		if user == game.puppet:
-			user.message('Would you like to play a game?', 'You have been randomly selected to play the role of Puppet in this round of Tag. To accept this invitation, reply to this message with !accept. To reject this invitation, reply with !reject. If no response is recieved within 24 hours, another user will be selected.')
+			user.message('Would you like to play a game?', 'You have been randomly selected to play the role of Puppet in this round of Tag. To accept this invitation, reply to this message with !accept. To reject this invitation, reply with !reject. If no response is recieved within 24 hours, another user will be selected. \n\n[View the rules here](https://www.reddit.com/r/edefinition/comments/9v31ym/would_you_like_to_play_a_game/)')
 	
 	def acceptRole(game, user):
 		if user == game.master and game.master_accepted == False:
@@ -76,13 +76,14 @@ class Game:
 	def setPhrase(game, phrase):
 		game.phrase = phrase
 		game.start_day = datetime.today()
-		game.end_day = game.start_day + timedelta(days=6)
+		game.end_day = game.start_day + timedelta(days=1)
 		game.active = True
 		
 		print('Phrase: ' + phrase)
 		
-		game.master.message('Let the games begin', 'Phrase: ' + game.phrase + '\n\nThis phrase was accepted. The other user has been notified and the clock is now ticking. They have until ' + str(game.end_day) + ' to leave their comment. If it is not identified in one week, then they will win.')
-		game.puppet.message('Let the games begin', 'Phrase: ' + game.phrase + '\n\nYou have until ' + str(game.end_day) + ' to leave a comment that contains this phrase. When the bot sees your comment, it will notify you that it has been identified. If another user does not identify the comment in a week, then you win.')
+		game.master.message('Let the games begin', 'Phrase: ' + game.phrase + '\n\nThis phrase was accepted. The other user has been notified and the clock is now ticking. They have until ' + game.end_day.strftime("%c") + ' to leave their comment. If it is not identified in one week, then they will win.')
+		game.puppet.message('Let the games begin', 'Phrase: ' + game.phrase + '\n\nYou have until ' + game.end_day.strftime("%c") + ' to leave a comment that contains this phrase. When the bot sees your comment, it will notify you that it has been identified. If another user does not identify the comment in a week, then you win.')
+		reddit.subreddit('edefinition').submit('A new game has started', selftext='The phrase has been set and the Puppet must now place it somewhere in the subreddit in the next 24 hours. After it is placed, you all will have 24 hours to find it. Once the game is over another post will be submitted with details of the round.')
 	
 	def endGame(game, winner):
 		print('Winner: ' + str(game.master) + '\tRole: ' + winner)
@@ -93,6 +94,10 @@ class Game:
 			game.master.message('You win!','Congrats! You are victorious and will remain as the Master for another round')
 			game.puppet.message('You lost :(', 'Too bad, so sad. Better luck next time kiddo')
 			
+			if game.phrase == None:
+				game.phrase = "Phrase not placed"
+			reddit.subreddit('edefinition').submit(str(game.master) + ' has won this round as Master', selftext='Phrase: ' + game.phrase + '\n\nPuppet: ' + str(game.puppet) + '\n\nThe Master will remain as Master for the next round. A new Puppet will be selected now.')
+			
 			hold_master = game.master
 			hold_puppet = getRandomUser('puppet')
 			while str(hold_puppet) == str(hold_master):
@@ -101,6 +106,10 @@ class Game:
 		if winner == 'puppet':
 			game.puppet.message('You win!', 'Congrats! You are victorious and will become the Master for the next round')
 			game.master.message('You lost :(', 'Too bad, so sad. Better luck next time kiddo')
+			
+			if game.phrase == None:
+				game.phrase = "Phrase not placed"
+			reddit.subreddit('edefinition').submit(str(game.puppet) + ' has won this round as Puppet', selftext='Phrase: ' + game.phrase + '\n\nMaster: ' + str(game.master) + '\n\nThe Puppet will become the Master for the next round. A new Puppet will be selected now.')
 			
 			hold_master = game.puppet
 			hold_puppet = getRandomUser('puppet')
@@ -112,8 +121,6 @@ class Game:
 def readPMs(game):
 	messages = reddit.inbox.unread()
 	for message in messages:
-		print('Message ' + message.body)
-		print('Author: ' + str(message.author))
 		if message.body.startswith('!') and (message.author == game.puppet or message.author == game.master):
 			message_words = message.body.split()
 			command = message_words[0]
@@ -146,9 +153,10 @@ def readPMs(game):
 				message.mark_read()
 				continue
 
-
-first_master = getRandomUser('master')
-first_puppet = getRandomUser('puppet')
+first_master = reddit.redditor('connlocks')
+#first_master = getRandomUser('master')
+first_puppet = reddit.redditor('the_b00ts')
+#first_puppet = getRandomUser('puppet')
 
 while first_master == first_puppet:
 	first_puppet = getRandomUser('puppet')
@@ -156,54 +164,58 @@ while first_master == first_puppet:
 game = Game(first_master, first_puppet)
 
 while True:
-	for comment in reddit.subreddit('edefinition').stream.comments(pause_after=1):
-		if comment == None:
-			readPMs(game)
-			continue
+	try:
+		for comment in reddit.subreddit('edefinition').stream.comments(pause_after=1):
+			if comment == None:
+				readPMs(game)
+				continue
 		
-		if game.active == False:
-			if (datetime.now() - game.day_initialized).days >= 1:
-				if game.puppet_accepted == False:
-					game.puppet = getRandomUser('puppet')
-					game.offerRole(game.puppet)
-				if game.master_accepted == False:
-					game.master = getRandomUser('master')
-					game.offerRole(game.master)
-			
-		if game.active == True:
-			if game.phrase_placed == False:
+			if game.active == False:
+				if (datetime.now() - game.day_initialized).days >= 1:
+					if game.puppet_accepted == False:
+						game.puppet = getRandomUser('puppet')
+						game.offerRole(game.puppet)
+					if game.master_accepted == False:
+						game.master = getRandomUser('master')
+						game.offerRole(game.master)
 				
-				if (game.end_day - datetime.now()).days == 0:
-					print('Times up')
-					game = game.endGame('master')
-					
-			
-				elif str(comment.author).lower() == str(game.puppet).lower():
-					print('Comment from puppet')
-
-					if game.phrase.lower() in comment.body.lower():
-						print('Phrase found')
-						game.phrase_placed = True
-						game.end_day = game.end_day + timedelta(days=1)
-						print(game.end_day)
-						game.target_comment = comment.id
-						game.puppet.message('Phrase identified', '[Comment](' + comment.permalink + '): ' + comment.body)
-						game.master.message('Phrase identified', '[Comment](' + comment.permalink + '): ' + comment.body)
-					
-				elif comment.author != game.master and comment.author != game.puppet and (comment.body.lower() == "!you're it" or comment.body.lower() == "!youre it"):
-					comment.reply("Incorrect. This comment does not contain the word/phrase. Keep trying bb")
-					
-			if game.phrase_placed == True:
-				print('Phrase is placed')
-				if (game.end_day - datetime.now()).days == 0:
-					game = game.endGame('puppet')
+			if game.active == True:
+				if game.phrase_placed == False:
 				
-				elif comment.body.lower() == "!you're it" or comment.body.lower() == "!youre it":
-					print('Tag')
-					print(game.target_comment)
-					print(comment.parent_id)
-					if game.target_comment == comment.parent_id[3:]:
-						comment.reply('Correct! The next game shall being in 3...2...1...\n\n    COMMENCE START UP SEQUENCE')
+					if (game.end_day - datetime.now()).days < 0:
+						print('Times up')
 						game = game.endGame('master')
-					else:
+					
+			
+					elif str(comment.author).lower() == str(game.puppet).lower():
+						print('Comment from puppet')
+
+						if game.phrase.lower() in comment.body.lower():
+							print('Phrase found')
+							game.phrase_placed = True
+							game.end_day = game.end_day + timedelta(days=1)
+							print(game.end_day)
+							game.target_comment = comment.id
+							game.puppet.message('Phrase identified', '[Comment](' + comment.permalink + '): ' + comment.body)
+							game.master.message('Phrase identified', '[Comment](' + comment.permalink + '): ' + comment.body)
+					
+					elif "!you're it" in comment.body.lower() or "!youre it" in comment.body.lower():
 						comment.reply("Incorrect. This comment does not contain the word/phrase. Keep trying bb")
+					
+				if game.phrase_placed == True:
+					print('Phrase is placed')
+					if (game.end_day - datetime.now()).days < 0:
+						game = game.endGame('puppet')
+				
+					elif comment.body.lower() == "!you're it" or comment.body.lower() == "!youre it":
+						print('Tag')
+						print(game.target_comment)
+						print(comment.parent_id)
+						if game.target_comment == comment.parent_id[3:]:
+							comment.reply('Correct! The next game shall being in 3...2...1...\n\n    COMMENCE START UP SEQUENCE')
+							game = game.endGame('master')
+						else:
+							comment.reply("Incorrect. This comment does not contain the word/phrase. Keep trying bb")
+	except praw.prawcore.exceptions.ResponseException:
+		print('Error connecting to servers. Sleeping for 1 min')
+		time.sleep(60)
