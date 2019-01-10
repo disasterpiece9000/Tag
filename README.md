@@ -16,7 +16,7 @@ If the Puppets comment is correctly called out by a user then the Master wins an
 * If the Puppet doesn't use the phrase in that window, then the Master wins by default
 * If the phrase is not found within 24 hours of it being used, then the Puppet wins
 
-# Upcomming Features:
+## Upcomming Features:
 * Term limit for Masters
 * Scoring system
 * Additional roles?
