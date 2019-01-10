@@ -1,6 +1,4 @@
-# Tag
-
-## A game for small Subreddits
+# Tag: A game for small Subreddits
 
 Two users are chosen at random by the bot. One is the Master and the other is the Puppet. Their identity is a secret. The Master's job is to come up with a word or phrase, which is delivered to the bot. The bot then relays this phrase to the Puppet, who has 24 hours to use that phrase in a comment on this subreddit.
 
@@ -17,3 +15,8 @@ If the Puppets comment is correctly called out by a user then the Master wins an
 * The Puppet's comment must be made on a post that was created after the round started
 * If the Puppet doesn't use the phrase in that window, then the Master wins by default
 * If the phrase is not found within 24 hours of it being used, then the Puppet wins
+
+# Upcomming Features:
+* Term limit for Masters
+* Scoring system
+* Additional roles?
