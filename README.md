@@ -20,3 +20,5 @@ If the Puppets comment is correctly called out by a user then the Master wins an
 * Term limit for Masters
 * Scoring system
 * Additional roles?
+
+### Created by /u/shimmyjimmy97
