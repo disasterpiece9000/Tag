@@ -1,4 +1,4 @@
-# Tag: A game for small Subreddits
+# Tag: Not it!
 
 Two users are chosen at random by the bot. One is the Master and the other is the Puppet. Their identity is a secret. The Master's job is to come up with a word or phrase, which is delivered to the bot. The bot then relays this phrase to the Puppet, who has 24 hours to use that phrase in a comment on this subreddit.
 
