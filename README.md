@@ -6,7 +6,7 @@ After the phrase has been placed by the Puppet, it must go unnoticed for 24 hour
 
 The goal of the Master is to come up with a phrase weird enough that the Puppet will stick out like a sore thumb when they use it. The Puppet's goal is to work the phrase into a comment in a way that won't arise suspiscion from the other users. All the other users in the subreddit will try to look for suspicious comments to tag.
 
-If the Puppet's comment is correctly called out by a user then the Master wins and a new Puppet is chosen. If the Puppet uses the phrase and no one identifies it, then the Puppet wins and they become the Master for the next round.
+If the Puppet's comment is correctly called out by a user then the Master wins and a new Puppet is chosen. If the Puppet uses the phrase and no user identifies it, then the Puppet wins and they become the Master for the next round.
 
 ## Rules:
 * The phrase can be no longer than 3 words
