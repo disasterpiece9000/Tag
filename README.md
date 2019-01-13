@@ -13,8 +13,7 @@ If the Puppet's comment is correctly called out by a user then the Master wins a
 * Both roles have 24 hours to accept their role before it is given to a new user
 * Once both roles have accepted and the Master submits their phrase, the Puppet has 24 hours to use the phrase
 * The Puppet's comment must be made on a post that was created after the round started
-* If the Puppet doesn't use the phrase in that window, then the Master wins by default
-* If the phrase is not found within 24 hours of it being used, then the Puppet wins
+* If the Puppet doesn't use the phrase within 24 hours of it being set, then the Master wins by default
 
 ## Upcomming Features:
 * Term limit for Masters
