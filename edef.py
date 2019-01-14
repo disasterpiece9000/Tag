@@ -16,18 +16,20 @@ opt_in_users = []
 
 # Read db and add users to list
 def readOptIn():
-	opt_in_users = []
+	opt_in_users.clear()
 	opt_in_DB = TinyDB("opt-in")
 	for username in opt_in_DB:
 		opt_in_users.append(username['username'])
+	print ("Read " + str(len(opt_in_users)) + " users from opt-in")
 
 # Get a random user that is not the bot
 def getRandomUser(role):
+	print(opt_in_users)
 	random_user = random.choice(opt_in_users)
-	while random_user.name == 'shimmyjimmy97':
+	while random_user == 'shimmyjimmy97':
 		random_user = random.choice(edef_users)
 
-	return random_user
+	return reddit.redditor(random_user)
 
 # Handle user opt-in
 def addOptIn(username):
@@ -51,6 +53,8 @@ class Game:
 		game.puppet_accepted = False
 		# Day the two users were offered their role
 		game.day_initialized = datetime.now()
+		#TODO: One guess per user per round
+		game.used_guess = []
 
 		print('Master: ' + str(master) + '\tPuppet: ' + str(puppet))
 
@@ -71,7 +75,7 @@ class Game:
 		game.day_initialized = datetime.now()
 
 		if user == game.master:
-			user.message('Would you like to play a game?', 'You have been randomly selected to play the role of Master in this round of Tag. ' +_
+			user.message('Would you like to play a game?', 'You have been randomly selected to play the role of Master in this round of Tag. ' +
 			'To accept this invitation, reply to this message with !accept. To reject this invitation, reply with !reject. If no response is ' +
 			'recieved within 24 hours, another user will be selected. \n\n[View the rules here]' +
 			'(https://www.reddit.com/r/edefinition/comments/9v31ym/would_you_like_to_play_a_game/)')
@@ -140,13 +144,14 @@ class Game:
 		'clock is now ticking. They have until ' + game.end_time.strftime("%c") + ' to leave their comment. If it is not identified in one week, then they will win.')
 
 		game.puppet.message('Let the games begin', 'Phrase: ' + game.phrase + '\n\nYou have until ' + game.end_time.strftime("%c") + ' to leave a comment ' +
-		'that contains this phrase. When the bot sees your comment, it will notify you that it has been identified. If another user does not identify the comment in a week, then you win.')
+		'that contains this phrase. When the bot sees your comment, it will notify you that it has been identified. If another user does not identify the ' +
+		'comment in a week, then you win.')
 
 		# Notify other users about the active game
 		mess_subj = 'A new game has started!'
-		mess_body = 'The phrase has been set and the Puppet must now place it somewhere in the subreddit in the next 24 hours. ' +
+		mess_body = ('The phrase has been set and the Puppet must now place it somewhere in the subreddit in the next 24 hours. ' +
 		'After it is placed, you all will have 24 hours to find it. Once the game is over another post ' +
-		'will be submitted with details of the round.'
+		'will be submitted with details of the round.')
 		notifyUsers(mess_subj, mess_body)
 
 	# Notify all users about the results of the round and initalize the next round
@@ -162,10 +167,12 @@ class Game:
 			# If the phrase was never set change it to display that info
 			if game.phrase == None:
 				game.phrase = "Phrase not placed"
+			else:
+				game.phrase = '[' + game.phrase + '](' + game.phrase_permalink + ')'
 
 			# Submit end-of-round report
 			mess_subj = str(game.master) + ' has won this round as Master'
-			mess_body = 'Phrase: ' + game.phrase + '\n\nPuppet: ' + str(game.puppet) +
+			mess_body = 'Phrase: ' + game.phrase + '\n\nPuppet: ' + str(game.puppet) + '\n\n'
 			'\n\nThe Master will remain as Master for the next round. A new Puppet will be selected now.'
 			notifyUsers(mess_subj, mess_body)
 
@@ -186,8 +193,9 @@ class Game:
 
 			# Submit end-of-round report
 			mess_subj = str(game.puppet) + ' has won this round as Puppet'
-			mess_body = "Phrase: " + game.phrase + "\n\nMaster: " + str(game.master) +
-			'\n\nThe Puppet will become the Master for the next round. A new Puppet will be selected now.'
+			mess_body = ("Phrase: " + game.phrase + "\n\nMaster: " + str(game.master) +
+			'\n\nThe Puppet will become the Master for the next round. A new Puppet will be selected now.')
+			notifyUsers(mess_subj, mess_body)
 
 			# If the Puppet wins, they become the Master for the next round and a new Puppet is selected
 			hold_master = game.puppet
@@ -220,7 +228,7 @@ def readPMs(game):
 				elif len(message_words) > 4:
 					game.master.message('Phrase rejected', 'The phrase is longer than 3 words.\n\nPhrase: ' + game.phrase +
 					'\n\nNumber of words: ' + str(len(message_words - 1)))
-					
+
 					message.mark_read()
 					print('Phrase rejected: Phrase to long\nPhrase: ' + message.body[11:])
 					continue
@@ -241,10 +249,12 @@ def readPMs(game):
 				message.mark_read()
 				continue
 
+
+readOptIn()
 # Initial Master and Puppet
-first_master = reddit.redditor('connlocks')
+first_master = reddit.redditor('ThatguyIncognito')
 #first_master = getRandomUser('master')
-first_puppet = reddit.redditor('the_b00ts')
+first_puppet = reddit.redditor('DeadWater27')
 #first_puppet = getRandomUser('puppet')
 
 # Check that a user wasn't selected for both roles
@@ -267,7 +277,7 @@ while True:
 				continue
 
 			# Check for user opt-in
-			if ("!you're it" in comment or "!youre it" in comment) and str(comment.author) not in opt_in_users:
+			if ("!you're it" in comment.body or "!youre it" in comment.body) and str(comment.author) not in opt_in_users:
 				addOptIn(str(comment.author))
 				comment.reply("You have just opted-in to Tag. If you would like to opt-out then send /u/shimmyjimmy a PM with !opt-out as the subject.")
 
@@ -312,12 +322,13 @@ while True:
 
 								# Notify the Master and Puppet that the comment was identified by the bot
 								game.target_comment = comment.id
+								game.phrase_permalink = comment.permalink
 								game.puppet.message('Phrase identified', '[Comment](' + comment.permalink + '): ' + comment.body)
 								game.master.message('Phrase identified', '[Comment](' + comment.permalink + '): ' + comment.body)
 
 					# If the phrase isn't placed then the guess is always wrong
 					if "!you're it" in comment.body.lower() or "!youre it" in comment.body.lower():
-						comment.reply("Incorrect. This comment does not contain the word/phrase. Keep trying bb")
+						comment.reply("Not it. This comment does not contain the phrase. Keep trying bb")
 
 				# The Puppet has used the phrase
 				if game.phrase_placed == True:
@@ -335,12 +346,12 @@ while True:
 
 						# Correct guess: The Master wins the round
 						if game.target_comment == comment.parent_id[3:]:
-							comment.reply('Correct! The next game shall being in 3...2...1...\n\n    COMMENCE START UP SEQUENCE')
+							comment.reply("They're it! The next game shall being in 3...2...1...\n\n    COMMENCE START UP SEQUENCE")
 							game = game.endGame('master')
 						# Incorrect guess
 						else:
-							comment.reply("Incorrect. This comment does not contain the word/phrase. Keep trying bb")
+							comment.reply("Not it. This comment does not contain the phrase. Keep trying bb")
 
-	except praw.prawcore.exceptions.ResponseException:
+	except (prawcore.exceptions.ResponseException):
 		print('Error connecting to servers. Sleeping for 1 min')
 		time.sleep(60)
