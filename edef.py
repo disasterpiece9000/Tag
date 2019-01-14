@@ -11,13 +11,13 @@ from dateutil import relativedelta
 reddit = praw.Reddit('SentimentBot')
 # TinyDB Querry object
 find_stuff = Query()
+opt_in_DB = TinyDB("opt-in")
 # List of users who have opted-in
 opt_in_users = []
 
 # Read db and add users to list
 def readOptIn():
 	opt_in_users.clear()
-	opt_in_DB = TinyDB("opt-in")
 	for username in opt_in_DB:
 		opt_in_users.append(username['username'])
 	print ("Read " + str(len(opt_in_users)) + " users from opt-in")
@@ -42,6 +42,18 @@ def notifyUsers(subj, body):
 		user = reddit.redditor(username)
 		user.message(subj, body)
 
+# Remove a user from the opt-in list
+def optOut(username):
+	print("User has opted-out: " + username)
+	try:
+		opt_in_users.remove(username)
+	except ValueError:
+		print("User is not in opt-in list")
+		return
+
+	opt_in_DB.remove(find_stuff.username == username)
+
+
 # Game object
 class Game:
 	def __init__(game, master, puppet):
@@ -56,7 +68,7 @@ class Game:
 		#TODO: One guess per user per round
 		game.used_guess = []
 
-		print('Master: ' + str(master) + '\tPuppet: ' + str(puppet))
+		print('Master: ' + str(master) + '\tPuppet: ' + str(puppet) + '\n')
 
 		# Master's phrase
 		game.phrase = None
@@ -160,30 +172,38 @@ class Game:
 		if str(comment.author) not in opt_in_users:
 			addOptIn(str(comment.author))
 			comment.reply("You have just opted-in to Tag. If you would like to opt-out then send /u/shimmyjimmy a PM with !opt-out as the subject.")
+			print("User has opted-in: " + str(comment.author))
 
 		# If user has already guessed this round, then always return incorrect guess
-		if comment.author in used_guess:
+		if comment.author in game.used_guess:
 			comment.reply("Not so fast. You have already tagged another user this round. Please wait until next round to try again!")
+			print("User has already guessed this round: " + str(comment.author))
 
 		# If user is the master or the puppet, then always return incorrect guess
-		elif comment.author == game.master or game.author == game.puppet:
+		elif comment.author == game.master or comment.author == game.puppet:
 			comment.reply("Not it. This comment does not contain the phrase. Keep trying bb")
-			used_guess.append(comment.author)
+			game.used_guess.append(comment.author)
+			print("User is Puppet or Master: " + str(comment.author))
 
 		# If the phrase hasn't been placed yet, then always return incorrect guess
 		elif game.phrase_placed == False:
 			comment.reply("Not it. This comment does not contain the phrase. Keep trying bb")
-			used_guess.append(comment.author)
+			game.used_guess.append(comment.author)
+			print("User guessed before phrase was placed: " + str(comment.author))
 
 		# If the phrase is placed, check if it was left under the Puppet's comment
 		elif game.phrase_placed == True:
 			# Correct guess: The Master wins the round
 			if game.target_comment == comment.parent_id[3:]:
 				comment.reply("They're it! The next game shall being in 3...2...1...\n\n    COMMENCE START UP SEQUENCE")
+				print("User guessed correctly:" + str(comment.author))
 				game = game.endGame('master')
 			# Incorrect guess
 			else:
 				comment.reply("Not it. This comment does not contain the phrase. Keep trying bb")
+				print("User guessed incorrectly: " + str(comment.author))
+
+		print('\n')
 
 	# Notify all users about the results of the round and initalize the next round
 	def endGame(game, winner):
@@ -243,42 +263,51 @@ def readPMs(game):
 
 	for message in messages:
 		# Message from Master or Puppet
-		if message.body.startswith('!') and (message.author == game.puppet or message.author == game.master):
+		if message.body.startswith('!'):
 			message_words = message.body.split()
 			command = message_words[0]
-			print('Command: ' + command)
+			author = str(message.author)
+			print('User: ' + author + '\tCommand: ' + command)
+			if message.author == game.puppet or message.author == game.master
+				if command.lower() == '!setphrase' and message.author == game.master:
+					# Check if the phrase has already been placed
+					if game.phrase != None:
+						game.master.message('Phrase rejected', 'The phrase has already been set for this game.\n\nPhrase: ' + game.phrase)
+						message.mark_read()
+						print('Phrase rejected: Phrase already set')
+						continue
+					# Check if the phrase is too long
+					elif len(message_words) > 4:
+						game.master.message('Phrase rejected', 'The phrase is longer than 3 words.\n\nPhrase: ' + game.phrase +
+						'\n\nNumber of words: ' + str(len(message_words - 1)))
 
-			if command.lower() == '!setphrase' and message.author == game.master:
-				# Check if the phrase has already been placed
-				if game.phrase != None:
-					game.master.message('Phrase rejected', 'The phrase has already been set for this game.\n\nPhrase: ' + game.phrase)
+						message.mark_read()
+						print('Phrase rejected: Phrase to long\nPhrase: ' + message.body[11:])
+						continue
+					# Check that both Master and Puppet have accepted their roles
+					elif game.master_accepted and game.puppet_accepted:
+						game.setPhrase(message.body[11:])
+						message.mark_read()
+						print ('Phrase accepted\nPhrase: ' + message.body[11:])
+						continue
+				# Accept role
+				if command.lower() == '!accept':
+					game.acceptRole(message.author)
 					message.mark_read()
-					print('Phrase rejected: Phrase already set')
 					continue
-				# Check if the phrase is too long
-				elif len(message_words) > 4:
-					game.master.message('Phrase rejected', 'The phrase is longer than 3 words.\n\nPhrase: ' + game.phrase +
-					'\n\nNumber of words: ' + str(len(message_words - 1)))
+				# Reject role
+				if command.lower() == '!reject':
+					game.rejectRole(message.author)
+					message.mark_read()
+					continue
 
-					message.mark_read()
-					print('Phrase rejected: Phrase to long\nPhrase: ' + message.body[11:])
-					continue
-				# Check that both Master and Puppet have accepted their roles
-				elif game.master_accepted and game.puppet_accepted:
-					game.setPhrase(message.body[11:])
-					message.mark_read()
-					print ('Phrase accepted\nPhrase: ' + message.body[11:])
-					continue
-			# Accept role
-			if command.lower() == '!accept':
-				game.acceptRole(message.author)
-				message.mark_read()
-				continue
-			# Reject role
-			if command.lower() == '!reject':
-				game.rejectRole(message.author)
-				message.mark_read()
-				continue
+			elif str(message.author) in opt_in_users:
+				if command == "!opt-out":
+					optOut(str(message.author))
+					message.reply("Opt-out", "You have opted-out of Tag. If you wish to opt-in later, just leave a " +
+					"comment with '!you're it' in it and you will automatically opt-in to the game again.")
+
+			print('\n')
 
 
 readOptIn()
@@ -300,7 +329,7 @@ while True:
 	# Catch disconnect errors
 	try:
 		# Stream of comments from target subreddit
-		for comment in reddit.subreddit('edefinition').stream.comments(pause_after=1):
+		for comment in reddit.subreddit('edefinition').stream.comments(skip_existing=True,pause_after=1):
 
 			# If there are no new comments, check PMs
 			if comment == None:
@@ -309,7 +338,7 @@ while True:
 
 			# Check for user opt-in
 			if ("!you're it" in comment.body or "!youre it" in comment.body):
-				handleTag(comment)
+				game.handleTag(comment)
 
 			# Check if game has been inactive for < 24hrs
 			if game.active == False:
@@ -339,6 +368,7 @@ while True:
 
 						# Check if the phrase is in the comment
 						if game.phrase.lower() in comment.body.lower():
+							print("Phrase in comment")
 							post = comment.submission
 							post_time = post.created_utc
 							post_time = datetime.fromtimestamp(post_time)
@@ -348,7 +378,6 @@ while True:
 								print('Phrase found')
 								game.phrase_placed = True
 								game.end_time = datetime.now() + timedelta(days=1)
-								print(game.end_time)
 
 								# Notify the Master and Puppet that the comment was identified by the bot
 								game.target_comment = comment.id
@@ -356,9 +385,12 @@ while True:
 								game.puppet.message('Phrase identified', '[Comment](' + comment.permalink + '): ' + comment.body)
 								game.master.message('Phrase identified', '[Comment](' + comment.permalink + '): ' + comment.body)
 
+							else:
+								print("Comment found under old post and was not accpeted")
+								game.puppet.message("Phrase not accepted", "You must leave the phrase under a post that was created after the round started.")
+
 				# The Puppet has used the phrase
 				if game.phrase_placed == True:
-					print('Phrase is placed')
 
 					# If the game is past the end time, then the Puppet wins the round
 					if datetime.now() > game.end_time:
