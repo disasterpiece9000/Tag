@@ -154,6 +154,37 @@ class Game:
 		'will be submitted with details of the round.')
 		notifyUsers(mess_subj, mess_body)
 
+	# Resolve "!you're it" comments
+	def handleTag(game, comment):
+		# If the user placed a guess and isn't opted-in then add them to opt-in
+		if str(comment.author) not in opt_in_users:
+			addOptIn(str(comment.author))
+			comment.reply("You have just opted-in to Tag. If you would like to opt-out then send /u/shimmyjimmy a PM with !opt-out as the subject.")
+
+		# If user has already guessed this round, then always return incorrect guess
+		if comment.author in used_guess:
+			comment.reply("Not so fast. You have already tagged another user this round. Please wait until next round to try again!")
+
+		# If user is the master or the puppet, then always return incorrect guess
+		elif comment.author == game.master or game.author == game.puppet:
+			comment.reply("Not it. This comment does not contain the phrase. Keep trying bb")
+			used_guess.append(comment.author)
+
+		# If the phrase hasn't been placed yet, then always return incorrect guess
+		elif game.phrase_placed == False:
+			comment.reply("Not it. This comment does not contain the phrase. Keep trying bb")
+			used_guess.append(comment.author)
+
+		# If the phrase is placed, check if it was left under the Puppet's comment
+		elif game.phrase_placed == True:
+			# Correct guess: The Master wins the round
+			if game.target_comment == comment.parent_id[3:]:
+				comment.reply("They're it! The next game shall being in 3...2...1...\n\n    COMMENCE START UP SEQUENCE")
+				game = game.endGame('master')
+			# Incorrect guess
+			else:
+				comment.reply("Not it. This comment does not contain the phrase. Keep trying bb")
+
 	# Notify all users about the results of the round and initalize the next round
 	def endGame(game, winner):
 		print('Winner: ' + str(game.master) + '\tRole: ' + winner)
@@ -277,9 +308,8 @@ while True:
 				continue
 
 			# Check for user opt-in
-			if ("!you're it" in comment.body or "!youre it" in comment.body) and str(comment.author) not in opt_in_users:
-				addOptIn(str(comment.author))
-				comment.reply("You have just opted-in to Tag. If you would like to opt-out then send /u/shimmyjimmy a PM with !opt-out as the subject.")
+			if ("!you're it" in comment.body or "!youre it" in comment.body):
+				handleTag(comment)
 
 			# Check if game has been inactive for < 24hrs
 			if game.active == False:
@@ -317,7 +347,7 @@ while True:
 							if game.start_time < post_time:
 								print('Phrase found')
 								game.phrase_placed = True
-								game.end_time = game.end_time + timedelta(days=1)
+								game.end_time = datetime.now() + timedelta(days=1)
 								print(game.end_time)
 
 								# Notify the Master and Puppet that the comment was identified by the bot
@@ -326,31 +356,13 @@ while True:
 								game.puppet.message('Phrase identified', '[Comment](' + comment.permalink + '): ' + comment.body)
 								game.master.message('Phrase identified', '[Comment](' + comment.permalink + '): ' + comment.body)
 
-					# If the phrase isn't placed then the guess is always wrong
-					if "!you're it" in comment.body.lower() or "!youre it" in comment.body.lower():
-						comment.reply("Not it. This comment does not contain the phrase. Keep trying bb")
-
 				# The Puppet has used the phrase
 				if game.phrase_placed == True:
 					print('Phrase is placed')
 
 					# If the game is past the end time, then the Puppet wins the round
-					if (game.end_time - datetime.now()).days < 0:
+					if datetime.now() > game.end_time:
 						game = game.endGame('puppet')
-
-					# Check if user's guess is correct
-					elif comment.body.lower() == "!you're it" or comment.body.lower() == "!youre it":
-						print('Tag')
-						print(game.target_comment)
-						print(comment.parent_id)
-
-						# Correct guess: The Master wins the round
-						if game.target_comment == comment.parent_id[3:]:
-							comment.reply("They're it! The next game shall being in 3...2...1...\n\n    COMMENCE START UP SEQUENCE")
-							game = game.endGame('master')
-						# Incorrect guess
-						else:
-							comment.reply("Not it. This comment does not contain the phrase. Keep trying bb")
 
 	except (prawcore.exceptions.ResponseException):
 		print('Error connecting to servers. Sleeping for 1 min')
