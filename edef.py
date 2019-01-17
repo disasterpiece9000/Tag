@@ -24,7 +24,6 @@ def readOptIn():
 
 # Get a random user that is not the bot
 def getRandomUser(role):
-	print(opt_in_users)
 	random_user = random.choice(opt_in_users)
 	while random_user == 'shimmyjimmy97':
 		random_user = random.choice(opt_in_users)
