@@ -270,7 +270,7 @@ class Game:
                 hold_puppet = getRandomUser('puppet')
 
         if winner == 'puppet':
-            game.puppet.message('You win!', 'Congrats! You are victorious and will become the Master for the next round\n\n-----\n\n^(This is an automated message))
+            game.puppet.message('You win!', 'Congrats! You are victorious and will become the Master for the next round\n\n-----\n\n^(This is an automated message)')
             game.master.message('You lost :(', 'Too bad, so sad. Better luck next time kiddo\n\n-----\n\n^(This is an automated message)')
 
             # Submit end-of-round report
@@ -300,7 +300,7 @@ def readPMs(game):
             command = message_words[0]
             author = str(message.author)
             print('User: ' + author + '\tCommand: ' + command)
-            if message.author == game.puppet or message.author == game.master
+            if message.author == game.puppet or message.author == game.master:
                if command.lower() == '!setphrase' and message.author == game.master:
                     # Check if the phrase has already been placed
                     if game.phrase != None:
