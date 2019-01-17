@@ -348,10 +348,10 @@ def readPMs(game):
 
 readOptIn()
 # Initial Master and Puppet
-first_master = reddit.redditor('ThatguyIncognito')
-# first_master = getRandomUser('master')
-first_puppet = reddit.redditor('DeadWater27')
-# first_puppet = getRandomUser('puppet')
+#first_master = reddit.redditor('ThatguyIncognito')
+first_master = getRandomUser('master')
+#first_puppet = reddit.redditor('DeadWater27')
+first_puppet = getRandomUser('puppet')
 
 # Check that a user wasn't selected for both roles
 while first_master == first_puppet:
