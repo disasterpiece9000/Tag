@@ -679,11 +679,11 @@ while True:
 								game.phrase_permalink = comment.permalink
 								game.puppet.message(
 									'Phrase identified', '[Comment](' + comment.permalink + '): ' + comment.body +
-									"If another user doesn't tag the comment within the next 24hrs then you win." +
+									"\n\nIf another user doesn't tag the comment within the next 24hrs then you win." +
 									'\n\n-----\n\n^(This is an automated message)')
 								game.master.message(
 									'Phrase identified', '[Comment](' + comment.permalink + '): ' + comment.body +
-									"If another user tags the comment within the next 24hrs then you win." +
+									"\n\nIf another user tags the comment within the next 24hrs then you win." +
 									'\n\n-----\n\n^(This is an automated message)')
 
 							else:
