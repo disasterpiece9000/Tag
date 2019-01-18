@@ -55,6 +55,7 @@ def optOut(username):
 # Game object
 class Game:
 	def __init__(game, master, puppet):
+		# Set users and offer roles
 		game.master = master
 		game.puppet = puppet
 		game.offerRole(master)
@@ -68,6 +69,8 @@ class Game:
 		# Store location of phrase
 		game.target_comment = None
 		game.phrase_permalink = None
+		# Store the user who tagged the phrase
+		game.tagger = None
 
 		print('Master: ' + str(master) + '\tPuppet: ' + str(puppet) + '\n')
 
@@ -88,17 +91,19 @@ class Game:
 		game.day_initialized = datetime.now()
 
 		if user == game.master:
-			user.message('Would you like to play a game?', 'You have been randomly selected to play the role of Master in this round of Tag. ' +
-			'To accept this invitation, reply to this message with !accept. To reject this invitation, reply with !reject. If no response is ' +
-			'recieved within 24 hours, another user will be selected. \n\n[View the rules here]' +
-			'(https://github.com/disasterpiece9000/Tag/blob/master/README.md)' +
+			user.message('Would you like to play a game?',
+			'You have been randomly selected to play the role of Master in this round of Tag. ' +
+			'To accept this invitation, reply to this message with !accept. To reject this invitation, ' +
+			'reply with !reject. If no response is recieved within 24 hours, another user will be selected.' +
+			'\n\n[View the rules here](https://github.com/disasterpiece9000/Tag/blob/master/README.md)' +
 			'\n\n-----\n\n^(This is an automated message)')
 
 		if user == game.puppet:
-			user.message('Would you like to play a game?', 'You have been randomly selected to play the role of Puppet in this round of Tag. ' +
-			'To accept this invitation, reply to this message with !accept. To reject this invitation, reply with !reject. If no response is ' +
-			'recieved within 24 hours, another user will be selected. \n\n[View the rules here]' +
-			'(https://github.com/disasterpiece9000/Tag/blob/master/README.md)' +
+			user.message('Would you like to play a game?',
+			'You have been randomly selected to play the role of Puppet in this round of Tag. ' +
+			'To accept this invitation, reply to this message with !accept. To reject this invitation, ' +
+			'reply with !reject. If no response is recieved within 24 hours, another user will be selected. '+
+			'\n\n[View the rules here](https://github.com/disasterpiece9000/Tag/blob/master/README.md)' +
 			'\n\n-----\n\n^(This is an automated message)')
 
 	# Respond to the accepted role and inform the user of the next stage of the game
@@ -115,7 +120,8 @@ class Game:
 			game.puppet_accepted = True
 
 			game.puppet.message(
-				'Role accepted: Puppet', 'You will recieve a message informing you of the phrase once the Master has accepted their role and set a phrase.' +
+				'Role accepted: Puppet', 'You will recieve a message informing you of the phrase once the Master has accepted their ' +
+				'role and set a phrase.' +
 				'\n\n-----\n\n^(This is an automated message)')
 
 			print('User: ' + str(user) + '\nAccepted Role: Master')
@@ -164,14 +170,14 @@ class Game:
 
 		print('Phrase: ' + phrase)
 
-		game.master.message('Let the games begin', 'Phrase: ' + game.phrase + '\n\nThis phrase was accepted. The other user has been notified and the ' +
-							'clock is now ticking. They have until ' + game.end_time.strftime("%c") + ' to leave their comment. ' +
-							'If it is not identified in one week, then they will win.' +
+		game.master.message('Let the games begin', 'Phrase: ' + game.phrase + '\n\nThis phrase was accepted. The other user has been notified ' +
+							'and the clock is now ticking. They have until ' + game.end_time.strftime("%m/%d/%Y, %H:%M:%S") +
+							' to leave their comment. If it is not identified in one week, then they will win.' +
 							'\n\n-----\n\n^(This is an automated message)')
 
-		game.puppet.message('Let the games begin', 'Phrase: ' + game.phrase + '\n\nYou have until ' + game.end_time.strftime("%c") + ' to leave a comment ' +
-							'that contains this phrase. When the bot sees your comment, it will notify you that it has been identified. If another user ' +
-							'does not identify the comment in a week, then you win.' +
+		game.puppet.message('Let the games begin', 'Phrase: ' + game.phrase + '\n\nYou have until ' + game.end_time.strftime("%m/%d/%Y, %H:%M:%S") +
+							' to leave a comment that contains this phrase. When the bot sees your comment, it will notify you that it has been ' +
+							'identified. If another user does not identify the comment in a week, then you win.' +
 							'\n\n-----\n\n^(This is an automated message)')
 
 		# Notify other users about the active game
@@ -268,7 +274,8 @@ class Game:
 				hold_puppet = getRandomUser('puppet')
 
 		if winner == 'puppet':
-			game.puppet.message('You win!', 'Congrats! You are victorious and will become the Master for the next round\n\n-----\n\n^(This is an automated message)')
+			game.puppet.message('You win!', 'Congrats! You are victorious and will become the Master for the next round' +
+								'\n\n-----\n\n^(This is an automated message)')
 			game.master.message('You lost :(', 'Too bad, so sad. Better luck next time kiddo\n\n-----\n\n^(This is an automated message)')
 
 			# Submit end-of-round report
@@ -376,7 +383,8 @@ def readPMs(game):
 			game.puppet_accepted = True
 
 			game.puppet.message(
-				'Role accepted: Puppet', 'You will recieve a message informing you of the phrase once the Master has accepted their role and set a phrase.' +
+				'Role accepted: Puppet', 'You will recieve a message informing you of the phrase once the Master has accepted their ' +
+				'role and set a phrase.' +
 				'\n\n-----\n\n^(This is an automated message)')
 
 			print('User: ' + str(user) + '\nAccepted Role: Master')
@@ -425,14 +433,15 @@ def readPMs(game):
 
 		print('Phrase: ' + phrase)
 
-		game.master.message('Let the games begin', 'Phrase: ' + game.phrase + '\n\nThis phrase was accepted. The other user has been notified and the ' +
-							'clock is now ticking. They have until ' + game.end_time.strftime("%c") + ' to leave their comment. ' +
-							'If it is not identified in one week, then they will win.' +
+		game.master.message('Let the games begin', 'Phrase: ' + game.phrase + '\n\nThis phrase was accepted. The other user has been ' +
+							'notified and the clock is now ticking. They have until ' + game.end_time.strftime("%m/%d/%Y, %H:%M:%S") +
+							' to leave their comment. If it is not identified in one week, then they will win.' +
 							'\n\n-----\n\n^(This is an automated message)')
 
-		game.puppet.message('Let the games begin', 'Phrase: ' + game.phrase + '\n\nYou have until ' + game.end_time.strftime("%c") + ' to leave a comment ' +
-							'that contains this phrase. When the bot sees your comment, it will notify you that it has been identified. If another user ' +
-							'does not identify the comment in a week, then you win.' +
+		game.puppet.message('Let the games begin', 'Phrase: ' + game.phrase + '\n\nYou have until ' +
+							game.end_time.strftime("%m/%d/%Y, %H:%M:%S") + ' to leave a comment ' +
+							'that contains this phrase. When the bot sees your comment, it will notify you that it has been identified. ' +
+							'If another user does not identify the comment in a week, then you win.' +
 							'\n\n-----\n\n^(This is an automated message)')
 
 		# Notify other users about the active game
@@ -508,6 +517,7 @@ def readPMs(game):
 		else:
 			game.phrase = '[' + game.phrase + '](' + game.phrase_permalink + ')'
 
+		# Master wins
 		if winner == 'master':
 			game.master.message('You win!', 'Congrats! You are victorious and will remain the Master for another round' +
 								'\n\n-----\n\n^(This is an automated message)')
@@ -528,8 +538,10 @@ def readPMs(game):
 			while str(hold_puppet) == str(hold_master):
 				hold_puppet = getRandomUser('puppet')
 
+		# Puppet wins
 		if winner == 'puppet':
-			game.puppet.message('You win!', 'Congrats! You are victorious and will become the Master for the next round\n\n-----\n\n^(This is an automated message)')
+			game.puppet.message('You win!', 'Congrats! You are victorious and will become the Master for the next round" +
+								'\n\n-----\n\n^(This is an automated message)')
 			game.master.message('You lost :(', 'Too bad, so sad. Better luck next time kiddo\n\n-----\n\n^(This is an automated message)')
 
 			# Submit end-of-round report
@@ -570,6 +582,7 @@ def readPMs(game):
 						message.mark_read()
 						print('Phrase rejected: Phrase already set')
 						continue
+
 					# Check if the phrase is too long
 					elif len(message_words) > 4:
 						game.master.message('Phrase rejected', 'The phrase is longer than 3 words.\n\nPhrase: ' + game.phrase +
@@ -579,6 +592,7 @@ def readPMs(game):
 						message.mark_read()
 						print('Phrase rejected: Phrase to long\nPhrase: ' + message.body[11:])
 						continue
+
 					# Check that both Master and Puppet have accepted their roles
 					elif game.master_accepted and game.puppet_accepted:
 						game.setPhrase(message.body[11:])
@@ -677,19 +691,25 @@ while True:
 								# Notify the Master and Puppet that the comment was identified by the bot
 								game.target_comment = comment.id
 								game.phrase_permalink = comment.permalink
+								game.tagger = str(comment.author)
+
+
 								game.puppet.message(
 									'Phrase identified', '[Comment](' + comment.permalink + '): ' + comment.body +
 									"\n\nIf another user doesn't tag the comment within the next 24hrs then you win." +
+									"\n\nEnd Time: " + game.end_time.strftime("%m/%d/%Y, %H:%M:%S") +
 									'\n\n-----\n\n^(This is an automated message)')
 								game.master.message(
 									'Phrase identified', '[Comment](' + comment.permalink + '): ' + comment.body +
 									"\n\nIf another user tags the comment within the next 24hrs then you win." +
+									"\n\nEnd Time: " + game.end_time.strftime("%m/%d/%Y, %H:%M:%S") +
 									'\n\n-----\n\n^(This is an automated message)')
 
 							else:
 								print("Comment found under old post and was not accpeted")
 								game.puppet.message(
 									"Phrase not accepted", "You must leave the phrase under a post that was created after the round started." +
+									"\n\nStart Time: " + game.start.strftime("%m/%d/%Y, %H:%M:%S") +
 									'\n\n-----\n\n^(This is an automated message)')
 
 				# The Puppet has used the phrase
