@@ -649,7 +649,7 @@ while True:
 				continue
 
 			# Check for user opt-in
-			if ("!you're it" in comment.body or "!youre it" in comment.body):
+			if ("!you're it" in comment.body or "!you’re it" in comment.body or "!youre it" in comment.body):
 				game.handleTag(comment)
 
 			# Check if game has been inactive for < 24hrs
