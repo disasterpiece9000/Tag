@@ -15,6 +15,12 @@ opt_in_DB = TinyDB("opt-in")
 # List of users who have opted-in
 opt_in_users = []
 
+# Automated message footer
+message_footer = "\n\n**This is an automated message**" +
+				"\n\n-----\n\n[View the rules here](https://github.com/disasterpiece9000/Tag)" +
+				" | [How to opt-in](https://www.reddit.com/user/shimmyjimmy97/comments/alt7e8/how_to_optin_to_tag/)" +
+				" | [Contact the dev](https://www.reddit.com/message/compose/?to=shimmyjimmy97)"
+
 # Read db and add users to list
 def readOptIn():
 	opt_in_users.clear()
@@ -95,16 +101,14 @@ class Game:
 			'You have been randomly selected to play the role of Master in this round of Tag. ' +
 			'To accept this invitation, reply to this message with !accept. To reject this invitation, ' +
 			'reply with !reject. If no response is recieved within 24 hours, another user will be selected.' +
-			'\n\n[View the rules here](https://github.com/disasterpiece9000/Tag/blob/master/README.md)' +
-			'\n\n-----\n\n^(This is an automated message)')
+			message_footer)
 
 		if user == game.puppet:
 			user.message('Would you like to play a game?',
 			'You have been randomly selected to play the role of Puppet in this round of Tag. ' +
 			'To accept this invitation, reply to this message with !accept. To reject this invitation, ' +
 			'reply with !reject. If no response is recieved within 24 hours, another user will be selected. '+
-			'\n\n[View the rules here](https://github.com/disasterpiece9000/Tag/blob/master/README.md)' +
-			'\n\n-----\n\n^(This is an automated message)')
+			message_footer)
 
 	# Respond to the accepted role and inform the user of the next stage of the game
 	def acceptRole(game, user):
@@ -113,7 +117,7 @@ class Game:
 
 			game.master.message(
 				'Role accepted: Master', 'You will recieve a message asking for a phrase once the Puppet has also accepted their role.' +
-				'\n\n-----\n\n^(This is an automated message)')
+				message_footer)
 
 			print('User: ' + str(user) + '\nAccepted Role: Master')
 		elif user == game.puppet and game.puppet_accepted == False:
@@ -122,7 +126,7 @@ class Game:
 			game.puppet.message(
 				'Role accepted: Puppet', 'You will recieve a message informing you of the phrase once the Master has accepted their ' +
 				'role and set a phrase.' +
-				'\n\n-----\n\n^(This is an automated message)')
+				message_footer)
 
 			print('User: ' + str(user) + '\nAccepted Role: Master')
 
@@ -131,7 +135,7 @@ class Game:
 			game.master.message('Please set the phrase for the game to begin', 'Reply to this PM with !setphrase as the first text in the body, ' +
 			'followed by the word or phrase of your choice. The phrase can be no longer than 3 words. You will recieve a confirmation message ' +
 			'once it has been successfully set.' +
-			'\n\n-----\n\n^(This is an automated message)')
+			message_footer)
 
 	# Find a new user to fill the role
 	def rejectRole(game, user):
@@ -171,21 +175,21 @@ class Game:
 		print('Phrase: ' + phrase)
 
 		game.master.message('Let the games begin', 'Phrase: ' + game.phrase + '\n\nThis phrase was accepted. The other user has been notified ' +
-							'and the clock is now ticking. They have until ' + game.end_time.strftime("%m/%d/%Y, %H:%M:%S") +
-							' to leave their comment. If it is not identified in one week, then they will win.' +
-							'\n\n-----\n\n^(This is an automated message)')
+							'and the clock is now ticking. They have until ' + game.end_time.strftime("%m/%d/%Y, %H:%M:%S") + ' EST '
+							'to leave their comment. If it is not identified in 24 hours, then they will win.' +
+							message_footer)
 
 		game.puppet.message('Let the games begin', 'Phrase: ' + game.phrase + '\n\nYou have until ' + game.end_time.strftime("%m/%d/%Y, %H:%M:%S") +
-							' to leave a comment that contains this phrase. When the bot sees your comment, it will notify you that it has been ' +
-							'identified. If another user does not identify the comment in a week, then you win.' +
-							'\n\n-----\n\n^(This is an automated message)')
+							' EST to leave a comment that contains this phrase. When the bot sees your comment, it will notify you that it has been ' +
+							'identified. If another user does not identify the comment in a 24 hours, then you win.' +
+							message_footer)
 
 		# Notify other users about the active game
 		mess_subj = 'A new game has started!'
 		mess_body = ('The phrase has been set and the Puppet must now place it somewhere in the subreddit in the next 24 hours. ' +
 					'After it is placed, you all will have another 24 hours to find it. Once the game is over another PM ' +
 					'will be sent with details of the round.' +
-					'\n\n-----\n\n^(This is an automated message)')
+					message_footer)
 
 		notifyUsers(mess_subj, mess_body)
 
@@ -194,22 +198,22 @@ class Game:
 		# If the user placed a guess and isn't opted-in then add them to opt-in
 		if str(comment.author) not in opt_in_users:
 			addOptIn(str(comment.author))
-			comment.reply("You have just opted-in to Tag. If you would like to opt-out then send /u/shimmyjimmy a PM with !opt-out as the subject." +
-						'\n\n-----\n\n^(This is an automated message)')
+			comment.reply("You have just opted-in to Tag. If you would like to opt-out then send /u/shimmyjimmy97 a PM with !opt-out as the body." +
+						message_footer)
 
 			print("User has opted-in: " + str(comment.author))
 
 		# If user has already guessed this round, then always return incorrect guess
 		if comment.author in game.used_guess:
 			comment.reply("Not so fast. You have already tagged another user this round. Please wait until next round to try again!" +
-						'\n\n-----\n\n^(This is an automated message)')
+						message_footer)
 
 			print("User has already guessed this round: " + str(comment.author))
 
 		# If user is the master or the puppet, then always return incorrect guess
 		elif comment.author == game.master or comment.author == game.puppet:
 			comment.reply("Not it. This comment does not contain the phrase. Keep trying bb" +
-						'\n\n-----\n\n^(This is an automated message)')
+						message_footer)
 
 			game.used_guess.append(comment.author)
 			print("User is Puppet or Master: " + str(comment.author))
@@ -217,7 +221,7 @@ class Game:
 		# If the phrase hasn't been placed yet, then always return incorrect guess
 		elif game.phrase_placed == False:
 			comment.reply("Not it. This comment does not contain the phrase. Keep trying bb" +
-						'\n\n-----\n\n^(This is an automated message)')
+						message_footer)
 
 			game.used_guess.append(comment.author)
 			print("User guessed before phrase was placed: " + str(comment.author))
@@ -227,14 +231,14 @@ class Game:
 			# Correct guess: The Master wins the round
 			if game.target_comment == comment.parent_id[3:]:
 				comment.reply("They're it! The next game shall being in 3...2...1...\n\n    COMMENCE START UP SEQUENCE" +
-							'\n\n-----\n\n^(This is an automated message)')
+							message_footer)
 
 				print("User guessed correctly:" + str(comment.author))
 				game = game.endGame('master')
 			# Incorrect guess
 			else:
 				comment.reply("Not it. This comment does not contain the phrase. Keep trying bb" +
-							'\n\n-----\n\n^(This is an automated message)')
+							message_footer)
 
 				game.used_guess.append(comment.author)
 				print("User guessed incorrectly: " + str(comment.author))
@@ -255,15 +259,15 @@ class Game:
 
 		if winner == 'master':
 			game.master.message('You win!', 'Congrats! You are victorious and will remain the Master for another round' +
-								'\n\n-----\n\n^(This is an automated message)')
+								message_footer)
 			game.puppet.message('You lost :(', 'Too bad, so sad. Better luck next time kiddo' +
-								'\n\n-----\n\n^(This is an automated message)')
+								message_footer)
 
 			# Submit end-of-round report
 			mess_subj = str(game.master) + ' has won this round as Master'
 			mess_body = 'Phrase: ' + game.phrase + '\n\nPuppet: ' + str(game.puppet) + '\n\n' +\
 						'\n\nThe Master will remain as the Master for the next round. A new Puppet will be selected now.' +\
-						'\n\n-----\n\n^(This is an automated message)'
+						message_footer
 			notifyUsers(mess_subj, mess_body)
 
 			# If the Master wins, they remian the master and a new Puppet is selected
@@ -275,14 +279,14 @@ class Game:
 
 		if winner == 'puppet':
 			game.puppet.message('You win!', 'Congrats! You are victorious and will become the Master for the next round' +
-								'\n\n-----\n\n^(This is an automated message)')
+								message_footer)
 			game.master.message('You lost :(', 'Too bad, so sad. Better luck next time kiddo\n\n-----\n\n^(This is an automated message)')
 
 			# Submit end-of-round report
 			mess_subj = str(game.puppet) + ' has won this round as Puppet'
 			mess_body = ("Phrase: " + game.phrase + "\n\nMaster: " + str(game.master) +
 						 '\n\nThe Puppet will become the Master for the next round. A new Puppet will be selected now.' +
-						 '\n\n-----\n\n^(This is an automated message)')
+						 message_footer)
 			notifyUsers(mess_subj, mess_body)
 
 			# If the Puppet wins, they become the Master for the next round and a new Puppet is selected
@@ -311,7 +315,7 @@ def readPMs(game):
 					if game.phrase != None:
 						game.master.message(
 							'Phrase rejected', 'The phrase has already been set for this game.\n\nPhrase: ' + game.phrase +
-							'\n\n-----\n\n^(This is an automated message)')
+							message_footer)
 						message.mark_read()
 						print('Phrase rejected: Phrase already set')
 						continue
@@ -319,7 +323,7 @@ def readPMs(game):
 					elif len(message_words) > 4:
 						game.master.message('Phrase rejected', 'The phrase is longer than 3 words.\n\nPhrase: ' + game.phrase +
 											'\n\nNumber of words: ' + str(len(message_words - 1)) +
-											'\n\n-----\n\n^(This is an automated message)')
+											message_footer)
 
 						message.mark_read()
 						print('Phrase rejected: Phrase to long\nPhrase: ' + message.body[11:])
@@ -346,7 +350,7 @@ def readPMs(game):
 					optOut(str(message.author))
 					message.reply("Opt-out", "You have opted-out of Tag. If you wish to opt-in later, just leave a " +
 								  "comment with '!you're it' in it and you will automatically opt-in to the game again." +
-								  '\n\n-----\n\n^(This is an automated message)')
+								  message_footer)
 
 			print('\n')
 
@@ -358,16 +362,14 @@ def readPMs(game):
 		if user == game.master:
 			user.message('Would you like to play a game?', 'You have been randomly selected to play the role of Master in this round of Tag. ' +
 			'To accept this invitation, reply to this message with !accept. To reject this invitation, reply with !reject. If no response is ' +
-			'recieved within 24 hours, another user will be selected. \n\n[View the rules here]' +
-			'(https://github.com/disasterpiece9000/Tag/blob/master/README.md)' +
-			'\n\n-----\n\n^(This is an automated message)')
+			'recieved within 24 hours, another user will be selected.' +
+			message_footer)
 
 		if user == game.puppet:
 			user.message('Would you like to play a game?', 'You have been randomly selected to play the role of Puppet in this round of Tag. ' +
 			'To accept this invitation, reply to this message with !accept. To reject this invitation, reply with !reject. If no response is ' +
-			'recieved within 24 hours, another user will be selected. \n\n[View the rules here]' +
-			'(https://github.com/disasterpiece9000/Tag/blob/master/README.md)' +
-			'\n\n-----\n\n^(This is an automated message)')
+			'recieved within 24 hours, another user will be selected.' +
+			message_footer)
 
 	# Respond to the accepted role and inform the user of the next stage of the game
 	def acceptRole(game, user):
@@ -376,7 +378,7 @@ def readPMs(game):
 
 			game.master.message(
 				'Role accepted: Master', 'You will recieve a message asking for a phrase once the Puppet has also accepted their role.' +
-				'\n\n-----\n\n^(This is an automated message)')
+				message_footer)
 
 			print('User: ' + str(user) + '\nAccepted Role: Master')
 		elif user == game.puppet and game.puppet_accepted == False:
@@ -385,7 +387,7 @@ def readPMs(game):
 			game.puppet.message(
 				'Role accepted: Puppet', 'You will recieve a message informing you of the phrase once the Master has accepted their ' +
 				'role and set a phrase.' +
-				'\n\n-----\n\n^(This is an automated message)')
+				message_footer)
 
 			print('User: ' + str(user) + '\nAccepted Role: Master')
 
@@ -394,7 +396,7 @@ def readPMs(game):
 			game.master.message('Please set the phrase for the game to begin', 'Reply to this PM with !setphrase as the first text in the body, ' +
 			'followed by the word or phrase of your choice. The phrase can be no longer than 3 words. You will recieve a confirmation message ' +
 			'once it has been successfully set.' +
-			'\n\n-----\n\n^(This is an automated message)')
+			message_footer)
 
 	# Find a new user to fill the role
 	def rejectRole(game, user):
@@ -435,21 +437,21 @@ def readPMs(game):
 
 		game.master.message('Let the games begin', 'Phrase: ' + game.phrase + '\n\nThis phrase was accepted. The other user has been ' +
 							'notified and the clock is now ticking. They have until ' + game.end_time.strftime("%m/%d/%Y, %H:%M:%S") +
-							' to leave their comment. If it is not identified in one week, then they will win.' +
-							'\n\n-----\n\n^(This is an automated message)')
+							' EST to leave their comment. If it is not identified in one week, then they will win.' +
+							message_footer)
 
 		game.puppet.message('Let the games begin', 'Phrase: ' + game.phrase + '\n\nYou have until ' +
-							game.end_time.strftime("%m/%d/%Y, %H:%M:%S") + ' to leave a comment ' +
+							game.end_time.strftime("%m/%d/%Y, %H:%M:%S") + ' EST to leave a comment ' +
 							'that contains this phrase. When the bot sees your comment, it will notify you that it has been identified. ' +
 							'If another user does not identify the comment in a week, then you win.' +
-							'\n\n-----\n\n^(This is an automated message)')
+							message_footer)
 
 		# Notify other users about the active game
 		mess_subj = 'A new game has started!'
 		mess_body = ('The phrase has been set and the Puppet must now place it somewhere in the subreddit in the next 24 hours. ' +
 					'After it is placed, you all will have another 24 hours to find it. Once the game is over another PM ' +
 					'will be sent with details of the round.' +
-					'\n\n-----\n\n^(This is an automated message)')
+					message_footer)
 
 		notifyUsers(mess_subj, mess_body)
 
@@ -458,22 +460,22 @@ def readPMs(game):
 		# If the user placed a guess and isn't opted-in then add them to opt-in
 		if str(comment.author) not in opt_in_users:
 			addOptIn(str(comment.author))
-			comment.reply("You have just opted-in to Tag. If you would like to opt-out then send /u/shimmyjimmy a PM with !opt-out as the subject." +
-						'\n\n-----\n\n^(This is an automated message)')
+			comment.reply("You have just opted-in to Tag. If you would like to opt-out then send /u/shimmyjimmy a PM with !opt-out as the body." +
+						message_footer)
 
 			print("User has opted-in: " + str(comment.author))
 
 		# If user has already guessed this round, then always return incorrect guess
 		if comment.author in game.used_guess:
 			comment.reply("Not so fast. You have already tagged another user this round. Please wait until next round to try again!" +
-						'\n\n-----\n\n^(This is an automated message)')
+						message_footer)
 
 			print("User has already guessed this round: " + str(comment.author))
 
 		# If user is the master or the puppet, then always return incorrect guess
 		elif comment.author == game.master or comment.author == game.puppet:
 			comment.reply("Not it. This comment does not contain the phrase. Keep trying bb" +
-						'\n\n-----\n\n^(This is an automated message)')
+						message_footer)
 
 			game.used_guess.append(comment.author)
 			print("User is Puppet or Master: " + str(comment.author))
@@ -481,7 +483,7 @@ def readPMs(game):
 		# If the phrase hasn't been placed yet, then always return incorrect guess
 		elif game.phrase_placed == False:
 			comment.reply("Not it. This comment does not contain the phrase. Keep trying bb" +
-						'\n\n-----\n\n^(This is an automated message)')
+						message_footer)
 
 			game.used_guess.append(comment.author)
 			print("User guessed before phrase was placed: " + str(comment.author))
@@ -491,14 +493,14 @@ def readPMs(game):
 			# Correct guess: The Master wins the round
 			if game.target_comment == comment.parent_id[3:]:
 				comment.reply("They're it! The next game shall being in 3...2...1...\n\n    COMMENCE START UP SEQUENCE" +
-							'\n\n-----\n\n^(This is an automated message)')
+							message_footer)
 
 				print("User guessed correctly:" + str(comment.author))
 				game = game.endGame('master')
 			# Incorrect guess
 			else:
 				comment.reply("Not it. This comment does not contain the phrase. Keep trying bb" +
-							'\n\n-----\n\n^(This is an automated message)')
+							message_footer)
 
 				game.used_guess.append(comment.author)
 				print("User guessed incorrectly: " + str(comment.author))
@@ -520,15 +522,15 @@ def readPMs(game):
 		# Master wins
 		if winner == 'master':
 			game.master.message('You win!', 'Congrats! You are victorious and will remain the Master for another round' +
-								'\n\n-----\n\n^(This is an automated message)')
+								message_footer)
 			game.puppet.message('You lost :(', 'Too bad, so sad. Better luck next time kiddo' +
-								'\n\n-----\n\n^(This is an automated message)')
+								message_footer)
 
 			# Submit end-of-round report
 			mess_subj = str(game.master) + ' has won this round as Master'
 			mess_body = 'Phrase: ' + game.phrase + '\n\nPuppet: ' + str(game.puppet) + '\n\n' +\
 						'\n\nThe Master will remain as the Master for the next round. A new Puppet will be selected now.' +\
-						'\n\n-----\n\n^(This is an automated message)'
+						message_footer
 			notifyUsers(mess_subj, mess_body)
 
 			# If the Master wins, they remian the master and a new Puppet is selected
@@ -541,14 +543,14 @@ def readPMs(game):
 		# Puppet wins
 		if winner == 'puppet':
 			game.puppet.message('You win!', 'Congrats! You are victorious and will become the Master for the next round" +
-								'\n\n-----\n\n^(This is an automated message)')
+								message_footer)
 			game.master.message('You lost :(', 'Too bad, so sad. Better luck next time kiddo\n\n-----\n\n^(This is an automated message)')
 
 			# Submit end-of-round report
 			mess_subj = str(game.puppet) + ' has won this round as Puppet'
 			mess_body = ("Phrase: " + game.phrase + "\n\nMaster: " + str(game.master) +
 						 '\n\nThe Puppet will become the Master for the next round. A new Puppet will be selected now.' +
-						 '\n\n-----\n\n^(This is an automated message)')
+						 message_footer)
 			notifyUsers(mess_subj, mess_body)
 
 			# If the Puppet wins, they become the Master for the next round and a new Puppet is selected
@@ -578,7 +580,7 @@ def readPMs(game):
 					if game.phrase != None:
 						game.master.message(
 							'Phrase rejected', 'The phrase has already been set for this game.\n\nPhrase: ' + game.phrase +
-							'\n\n-----\n\n^(This is an automated message)')
+							message_footer)
 						message.mark_read()
 						print('Phrase rejected: Phrase already set')
 						continue
@@ -587,7 +589,7 @@ def readPMs(game):
 					elif len(message_words) > 4:
 						game.master.message('Phrase rejected', 'The phrase is longer than 3 words.\n\nPhrase: ' + game.phrase +
 											'\n\nNumber of words: ' + str(len(message_words - 1)) +
-											'\n\n-----\n\n^(This is an automated message)')
+											message_footer)
 
 						message.mark_read()
 						print('Phrase rejected: Phrase to long\nPhrase: ' + message.body[11:])
@@ -615,7 +617,7 @@ def readPMs(game):
 					optOut(str(message.author))
 					message.reply("Opt-out", "You have opted-out of Tag. If you wish to opt-in later, just leave a " +
 								  "comment with '!you're it' in it and you will automatically opt-in to the game again." +
-								  '\n\n-----\n\n^(This is an automated message)')
+								  message_footer)
 
 			print('\n')
 
@@ -697,20 +699,20 @@ while True:
 								game.puppet.message(
 									'Phrase identified', '[Comment](' + comment.permalink + '): ' + comment.body +
 									"\n\nIf another user doesn't tag the comment within the next 24hrs then you win." +
-									"\n\nEnd Time: " + game.end_time.strftime("%m/%d/%Y, %H:%M:%S") +
-									'\n\n-----\n\n^(This is an automated message)')
+									"\n\nEnd Time: " + game.end_time.strftime("%m/%d/%Y, %H:%M:%S") + ' EST'
+									message_footer)
 								game.master.message(
 									'Phrase identified', '[Comment](' + comment.permalink + '): ' + comment.body +
 									"\n\nIf another user tags the comment within the next 24hrs then you win." +
-									"\n\nEnd Time: " + game.end_time.strftime("%m/%d/%Y, %H:%M:%S") +
-									'\n\n-----\n\n^(This is an automated message)')
+									"\n\nEnd Time: " + game.end_time.strftime("%m/%d/%Y, %H:%M:%S") + ' EST'
+									message_footer)
 
 							else:
 								print("Comment found under old post and was not accpeted")
 								game.puppet.message(
 									"Phrase not accepted", "You must leave the phrase under a post that was created after the round started." +
-									"\n\nStart Time: " + game.start.strftime("%m/%d/%Y, %H:%M:%S") +
-									'\n\n-----\n\n^(This is an automated message)')
+									"\n\nStart Time: " + game.start.strftime("%m/%d/%Y, %H:%M:%S") + ' EST'
+									message_footer)
 
 				# The Puppet has used the phrase
 				if game.phrase_placed == True:
