@@ -128,7 +128,7 @@ class Game:
 				'role and set a phrase.' +
 				message_footer)
 
-			print('User: ' + str(user) + '\nAccepted Role: Master')
+			print('User accepted role: ' + str(user))
 
 		# If both users have accepted then the master is asked to provide the phrase
 		if game.puppet_accepted == True and game.master_accepted == True:
@@ -189,6 +189,7 @@ class Game:
 		mess_body = ('The phrase has been set and the Puppet must now place it somewhere in the subreddit in the next 24 hours. ' +
 					'After it is placed, you all will have another 24 hours to find it. Once the game is over another PM ' +
 					'will be sent with details of the round.' +
+					'\n\nEnd Time: ' + game.end_time.strftime("%m/%d/%Y, %H:%M/%S")
 					message_footer)
 
 		notifyUsers(mess_subj, mess_body)
