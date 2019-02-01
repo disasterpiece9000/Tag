@@ -133,8 +133,8 @@ class Game:
 		# If both users have accepted then the master is asked to provide the phrase
 		if game.puppet_accepted == True and game.master_accepted == True:
 			game.master.message('Please set the phrase for the game to begin', 'Reply to this PM with !setphrase as the first text in the body, ' +
-			'followed by the word or phrase of your choice. The phrase can be no longer than 3 words. You will recieve a confirmation message ' +
-			'once it has been successfully set.' +
+			'followed by the word or phrase of your choice. The phrase can be no longer than 3 words and it cannot contain any user mentions. ' +
+			'You will recieve a confirmation message once it has been successfully set.' +
 			message_footer)
 
 	# Find a new user to fill the role
@@ -176,7 +176,7 @@ class Game:
 
 		game.master.message('Let the games begin', 'Phrase: ' + game.phrase + '\n\nThis phrase was accepted. The other user has been notified ' +
 							'and the clock is now ticking. They have until ' + game.end_time.strftime("%m/%d/%Y, %H:%M:%S") + ' EST '
-							'to leave their comment. If it is not identified in 24 hours, then they will win.' +
+							'to leave their comment. The comment can be placed under any post createdIf it is not identified in 24 hours, then they will win.' +
 							message_footer)
 
 		game.puppet.message('Let the games begin', 'Phrase: ' + game.phrase + '\n\nYou have until ' + game.end_time.strftime("%m/%d/%Y, %H:%M:%S") +
@@ -436,15 +436,18 @@ def readPMs(game):
 
 		print('Phrase: ' + phrase)
 
-		game.master.message('Let the games begin', 'Phrase: ' + game.phrase + '\n\nThis phrase was accepted. The other user has been ' +
-							'notified and the clock is now ticking. They have until ' + game.end_time.strftime("%m/%d/%Y, %H:%M:%S") +
-							' EST to leave their comment. If it is not identified in one week, then they will win.' +
+		game.master.message('Let the games begin', 'Phrase: ' + game.phrase + '\n\nThis phrase was accepted. The Puppet has been ' +
+							'notified and the clock is now ticking. If the comment is not identified in 24 hours, then they will win.' +
+							'The Puppet must leave the phrase under a post that was created 3 hours before the round started or later\n\n' +
+							'Posts created after ' + (game.start_time - timedelta(hours=3)).strftime("%m/%d/%Y, %H:%M:%S") + ' EST are valid' +
+							'\n\nEnd time: ' + game.end_time.strftime("%m/%d/%Y, %H:%M:%S") + ' EST'
 							message_footer)
 
-		game.puppet.message('Let the games begin', 'Phrase: ' + game.phrase + '\n\nYou have until ' +
-							game.end_time.strftime("%m/%d/%Y, %H:%M:%S") + ' EST to leave a comment ' +
-							'that contains this phrase. When the bot sees your comment, it will notify you that it has been identified. ' +
-							'If another user does not identify the comment in a week, then you win.' +
+		game.puppet.message('Let the games begin', 'Phrase: ' + game.phrase + '\n\nThis phrase was accepted. The Master has been ' +
+							'notified and the clock is now ticking. If the comment is not identified in 24 hours, then you will win.' +
+							'You must leave the phrase under a post that was created 3 hours before the round started or later\n\n' +
+							'Posts created after ' + (game.start_time - timedelta(hours=3)).strftime("%m/%d/%Y, %H:%M:%S") + ' EST are valid' +
+							'\n\nEnd time: ' + game.end_time.strftime("%m/%d/%Y, %H:%M:%S") + ' EST'
 							message_footer)
 
 		# Notify other users about the active game
@@ -452,6 +455,9 @@ def readPMs(game):
 		mess_body = ('The phrase has been set and the Puppet must now place it somewhere in the subreddit in the next 24 hours. ' +
 					'After it is placed, you all will have another 24 hours to find it. Once the game is over another PM ' +
 					'will be sent with details of the round.' +
+					'The Puppet must leave the phrase under a post that was created 3 hours before the round started or later\n\n' +
+					'Posts created after ' + (game.start_time - timedelta(hours=3)).strftime("%m/%d/%Y, %H:%M:%S") + ' EST are valid' +
+					'\n\nEnd time: ' + game.end_time.strftime("%m/%d/%Y, %H:%M:%S") + ' EST'
 					message_footer)
 
 		notifyUsers(mess_subj, mess_body)
@@ -475,7 +481,7 @@ def readPMs(game):
 
 		# If user is the master or the puppet, then always return incorrect guess
 		elif comment.author == game.master or comment.author == game.puppet:
-			comment.reply("Not it. This comment does not contain the phrase. Keep trying bb" +
+			comment.reply("Not it. This comment does not contain the phrase" +
 						message_footer)
 
 			game.used_guess.append(comment.author)
@@ -483,7 +489,7 @@ def readPMs(game):
 
 		# If the phrase hasn't been placed yet, then always return incorrect guess
 		elif game.phrase_placed == False:
-			comment.reply("Not it. This comment does not contain the phrase. Keep trying bb" +
+			comment.reply("Not it. This comment does not contain the phrase" +
 						message_footer)
 
 			game.used_guess.append(comment.author)
@@ -500,7 +506,7 @@ def readPMs(game):
 				game = game.endGame('master')
 			# Incorrect guess
 			else:
-				comment.reply("Not it. This comment does not contain the phrase. Keep trying bb" +
+				comment.reply("Not it. This comment does not contain the phrase" +
 							message_footer)
 
 				game.used_guess.append(comment.author)
@@ -543,9 +549,10 @@ def readPMs(game):
 
 		# Puppet wins
 		if winner == 'puppet':
-			game.puppet.message('You win!', 'Congrats! You are victorious and will become the Master for the next round" +
+			game.puppet.message('You win!', 'Congrats! You are victorious and will become the Master for the next round' +
 								message_footer)
-			game.master.message('You lost :(', 'Too bad, so sad. Better luck next time kiddo\n\n-----\n\n^(This is an automated message)')
+			game.master.message('You lost :(', 'Too bad, so sad. Better luck next time kiddo' +
+								message_footer)
 
 			# Submit end-of-round report
 			mess_subj = str(game.puppet) + ' has won this round as Puppet'
@@ -575,6 +582,7 @@ def readPMs(game):
 			author = str(message.author)
 			print('User: ' + author + '\tCommand: ' + command)
 
+			# Puppet/Master specific commands
 			if message.author == game.puppet or message.author == game.master:
 				if command.lower() == '!setphrase' and message.author == game.master:
 					# Check if the phrase has already been place
@@ -595,6 +603,11 @@ def readPMs(game):
 						message.mark_read()
 						print('Phrase rejected: Phrase to long\nPhrase: ' + message.body[11:])
 						continue
+					# Check if the phrase contains a user mention
+					elif ("u/" in message.body):
+						game.master.message("Phrase rejected", "The phrase cannot contain a user mention.\n\n" +
+											"Phrase: " + game.phrase +
+											message_footer)
 
 					# Check that both Master and Puppet have accepted their roles
 					elif game.master_accepted and game.puppet_accepted:
@@ -624,10 +637,10 @@ def readPMs(game):
 
 readOptIn()
 # Initial Master and Puppet
-#first_master = reddit.redditor('ThatguyIncognito')
-first_master = getRandomUser('master')
-#first_puppet = reddit.redditor('DeadWater27')
-first_puppet = getRandomUser('puppet')
+first_master = reddit.redditor('olderkj')
+#first_master = getRandomUser('master')
+first_puppet = reddit.redditor('CaelestisInteritum')
+#first_puppet = getRandomUser('puppet')
 
 # Check that a user wasn't selected for both roles
 while first_master == first_puppet:
@@ -686,7 +699,7 @@ while True:
 							post_time = datetime.fromtimestamp(post_time)
 
 							# Check if the comment is under a post that was made after the game started
-							if game.start_time < post_time:
+							if (game.start_time - timedelta(hours=3) < post_time:
 								print('Phrase found')
 								game.phrase_placed = True
 								game.end_time = datetime.now() + timedelta(days=1)
@@ -711,8 +724,9 @@ while True:
 							else:
 								print("Comment found under old post and was not accpeted")
 								game.puppet.message(
-									"Phrase not accepted", "You must leave the phrase under a post that was created after the round started." +
-									"\n\nStart Time: " + game.start.strftime("%m/%d/%Y, %H:%M:%S") + ' EST'
+									"Phrase not accepted", "You must leave the phrase under a post that was created 3 hours before" +
+									"the round started or later.\n\nPosts created after " +
+									(game.start_time - timedelta(hours=3)).strftime("%m/%d/%Y, %H:%M:%S") + ' EST are valid'
 									message_footer)
 
 				# The Puppet has used the phrase
