@@ -172,6 +172,8 @@ class Game:
 		# If the phrase was never set change it to display that info
 		if game.phrase == None:
 			game.phrase = "Phrase not placed"
+		elif game.phrase_permalink == None:
+			game.phrase += " - Phrase not palced by Puppet"
 		else:
 			game.phrase = '[' + game.phrase + '](' + game.phrase_permalink + ')'
 
@@ -295,7 +297,7 @@ class Game:
 							message_footer)
 
 				print("User guessed correctly:" + str(comment.author))
-				game = game.endGame('master')
+				return game.endGame('master')
 			# Incorrect guess
 			else:
 				comment.reply("Not it. This comment does not contain the phrase" +
@@ -303,80 +305,80 @@ class Game:
 
 				game.used_guess.append(comment.author)
 				print("User guessed incorrectly: " + str(comment.author))
-
+		return game
 		print('\n')
 
-# Check inbox for messages to process
-def readPMs(game):
-	messages = reddit.inbox.unread()
+	# Check inbox for messages to process
+	def readPMs(game):
+		messages = reddit.inbox.unread()
 
-	for message in messages:
-		# Message from Master or Puppet
-		if message.body.startswith('!'):
-			message_words = message.body.split()
-			command = message_words[0]
-			author = str(message.author)
-			print('User: ' + author + '\tCommand: ' + command)
+		for message in messages:
+			# Message from Master or Puppet
+			if message.body.startswith('!'):
+				message_words = message.body.split()
+				command = message_words[0]
+				author = str(message.author)
+				print('User: ' + author + '\tCommand: ' + command)
 
-			# Puppet/Master specific commands
-			if message.author == game.puppet or message.author == game.master:
-				if command.lower() == '!setphrase' and message.author == game.master:
-					# Check if the phrase has already been place
-					if game.phrase != None:
-						game.master.message(
-							'Phrase rejected', 'The phrase has already been set for this game.\n\nPhrase: ' + game.phrase +
-							message_footer)
+				# Puppet/Master specific commands
+				if message.author == game.puppet or message.author == game.master:
+					if command.lower() == '!setphrase' and message.author == game.master:
+						# Check if the phrase has already been place
+						if game.phrase != None:
+							game.master.message(
+								'Phrase rejected', 'The phrase has already been set for this game.\n\nPhrase: ' + game.phrase +
+								message_footer)
+							message.mark_read()
+							print('Phrase rejected: Phrase already set')
+							continue
+
+						# Check if the phrase is too long
+						elif len(message_words) > 4:
+							game.master.message('Phrase rejected', 'The phrase is longer than 3 words.\n\nPhrase: ' + game.phrase +
+												'\n\nNumber of words: ' + str(len(message_words - 1)) +
+												message_footer)
+
+							message.mark_read()
+							print('Phrase rejected: Phrase to long\nPhrase: ' + message.body[11:])
+							continue
+						# Check if the phrase contains a user mention
+						elif ("u/" in message.body):
+							game.master.message("Phrase rejected", "The phrase cannot contain a user mention.\n\n" +
+												"Phrase: " + game.phrase +
+												message_footer)
+
+						# Check that both Master and Puppet have accepted their roles
+						elif game.master_accepted and game.puppet_accepted:
+							game.setPhrase(message.body[11:])
+							message.mark_read()
+							print('Phrase accepted\nPhrase: ' + message.body[11:])
+							continue
+					# Accept role
+					if command.lower() == '!accept':
+						game.acceptRole(message.author)
 						message.mark_read()
-						print('Phrase rejected: Phrase already set')
+						continue
+					# Reject role
+					if command.lower() == '!reject':
+						game.rejectRole(message.author)
+						message.mark_read()
 						continue
 
-					# Check if the phrase is too long
-					elif len(message_words) > 4:
-						game.master.message('Phrase rejected', 'The phrase is longer than 3 words.\n\nPhrase: ' + game.phrase +
-											'\n\nNumber of words: ' + str(len(message_words - 1)) +
-											message_footer)
+				elif str(message.author) in opt_in_users:
+					if command == "!opt-out":
+						optOut(str(message.author))
+						message.reply("Opt-out", "You have opted-out of Tag. If you wish to opt-in later, just leave a " +
+									  "comment with '!you're it' in it and you will automatically opt-in to the game again." +
+									  message_footer)
 
-						message.mark_read()
-						print('Phrase rejected: Phrase to long\nPhrase: ' + message.body[11:])
-						continue
-					# Check if the phrase contains a user mention
-					elif ("u/" in message.body):
-						game.master.message("Phrase rejected", "The phrase cannot contain a user mention.\n\n" +
-											"Phrase: " + game.phrase +
-											message_footer)
-
-					# Check that both Master and Puppet have accepted their roles
-					elif game.master_accepted and game.puppet_accepted:
-						game.setPhrase(message.body[11:])
-						message.mark_read()
-						print('Phrase accepted\nPhrase: ' + message.body[11:])
-						continue
-				# Accept role
-				if command.lower() == '!accept':
-					game.acceptRole(message.author)
-					message.mark_read()
-					continue
-				# Reject role
-				if command.lower() == '!reject':
-					game.rejectRole(message.author)
-					message.mark_read()
-					continue
-
-			elif str(message.author) in opt_in_users:
-				if command == "!opt-out":
-					optOut(str(message.author))
-					message.reply("Opt-out", "You have opted-out of Tag. If you wish to opt-in later, just leave a " +
-								  "comment with '!you're it' in it and you will automatically opt-in to the game again." +
-								  message_footer)
-
-			print('\n')
+				print('\n')
 
 readOptIn()
 # Initial Master and Puppet
 first_master = reddit.redditor('olderkj')
 #first_master = getRandomUser('master')
-first_puppet = reddit.redditor('CaelestisInteritum')
-#first_puppet = getRandomUser('puppet')
+#first_puppet = reddit.redditor('AccursedShade')
+first_puppet = getRandomUser('puppet')
 
 # Check that a user wasn't selected for both roles
 while first_master == first_puppet:
@@ -394,12 +396,12 @@ while True:
 
 			# If there are no new comments, check PMs
 			if comment == None:
-				readPMs(game)
+				game.readPMs()
 				continue
 
 			# Check for user opt-in
 			if ("!you're it" in comment.body or "!you’re it" in comment.body or "!youre it" in comment.body):
-				game.handleTag(comment)
+				game = game.handleTag(comment)
 
 			# Check if game has been inactive for < 24hrs
 			if game.active == False:
@@ -472,6 +474,6 @@ while True:
 					if datetime.now() > game.end_time:
 						game = game.endGame('puppet')
 
-	except (prawcore.exceptions.ResponseException):
+	except (prawcore.exceptions.ResponseException, prawcore.exceptions.RequestException):
 		print('Error connecting to servers. Sleeping for 1 min')
 		time.sleep(60)
