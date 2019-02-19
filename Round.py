@@ -6,7 +6,6 @@ import random
 from tinydb import TinyDB, Query
 from datetime import datetime, date, timedelta
 from dateutil import relativedelta
-from Game import Game
 
 # PRAW instance
 reddit = praw.Reddit('SentimentBot')
@@ -19,15 +18,35 @@ message_footer = "\n\n**This is an automated message**" +\
 
 # Round object
 class Round:
-	def __init__(round, game, master, puppet):
+	def __init__(round, game, master=None, puppet=None):
+		# Link round to game
 		round.game = game
 
-		# Set users and offer roles
-		round.master = master
-		round.puppet = puppet
-		round.offerRole(master)
+		# Get opted-in user list
+		round.opt_in_DB = TinyDB("opt-in.json")
+		round.opt_in_users = round.readOptIn()
+
+		# Initial Master and Puppet
+		if (master == None and puppet == None):
+			hold_master = round.getRandomUser('master')
+			hold_puppet = round.getRandomUser('puppet')
+
+			# Check that a user wasn't selected for both roles
+			while hold_master == hold_puppet:
+				hold_puppet = round.getRandomUser('puppet')
+
+			round.master = hold_master
+			round.puppet = hold_puppet
+
+		# Set users if passed in constructor
+		else:
+			round.master = master
+			round.puppet = puppet
+
+		# Offer roles
+		round.offerRole(round.master)
 		round.master_accepted = False
-		round.offerRole(puppet)
+		round.offerRole(round.puppet)
 		round.puppet_accepted = False
 
 		# Day the two users were offered their role
@@ -43,7 +62,7 @@ class Round:
 		# Store the user who tagged the phrase
 		round.tagger = None
 
-		print('Master: ' + str(master) + '\tPuppet: ' + str(puppet) + '\n')
+		print('Master: ' + str(round.master) + '\tPuppet: ' + str(round.puppet) + '\n')
 
 		# Master's phrase
 		round.phrase = None
@@ -56,9 +75,43 @@ class Round:
 		# User who won the round
 		round.victor = None
 
+
+	# Get a random user that is not the bot
+	def getRandomUser(round, role):
+		random_user = random.choice(round.opt_in_users)
+		while random_user == 'shimmyjimmy97':
+			random_user = random.choice(round.opt_in_users)
+
+		return reddit.redditor(random_user)
+
+	# Read db and add users to list
+	def readOptIn(round):
+		hold_opt_in = []
+		for username in round.opt_in_DB:
+			hold_opt_in.append(username['username'])
+		print("Read " + str(len(hold_opt_in)) + " users from opt-in")
+		return hold_opt_in
+
+	# Handle user opt-in
+	def addOptIn(round, username):
+		round.opt_in_users.append(username)
+		round.opt_in_DB.insert({'username': username})
+
+	# Remove a user from the opt-in list
+	def optOut(round, username):
+		print("User has opted-out: " + username)
+
+		try:
+			round.opt_in_users.remove(username)
+		except ValueError:
+			print("User is not in opt-in list")
+			return
+
+		round.opt_in_DB.remove(find_stuff.username == username)
+
 	# Message all users
 	def notifyUsers(round, subj, body):
-		for username in round.game.opt_in_users:
+		for username in round.opt_in_users:
 			user = reddit.redditor(username)
 			user.message(subj, body)
 
@@ -171,12 +224,12 @@ class Round:
 					'\n\nEnd time: ' + round.end_time.strftime("%m/%d/%Y, %H:%M:%S") + ' EST' +
 					message_footer)
 
-		notifyUsers(mess_subj, mess_body)
+		round.notifyUsers(mess_subj, mess_body)
 
 	# Resolve "!you're it" comments
 	def handleTag(round, comment):
 		# If the user placed a guess and isn't opted-in then add them to opt-in
-		if str(comment.author) not in opt_in_users:
+		if str(comment.author) not in round.opt_in_users:
 			addOptIn(str(comment.author))
 			comment.reply("You have just opted-in to Tag. If you would like to opt-out then send /u/shimmyjimmy a PM with !opt-out as the body." +
 						message_footer)
@@ -214,7 +267,8 @@ class Round:
 							message_footer)
 
 				print("User guessed correctly:" + str(comment.author))
-				round.game.endRound('master')
+				round.tagger = comment.author
+				return ("master")
 			# Incorrect guess
 			else:
 				comment.reply("Not it. This comment does not contain the phrase" +
@@ -224,10 +278,16 @@ class Round:
 				print("User guessed incorrectly: " + str(comment.author))
 
 		print('\n')
+		return(None)
 
 	# Notify all users about the results of the round and initalize the next round
 	def endRound(round, winner):
-		print('Winner: ' + str(round.master) + '\tRole: ' + winner)
+		# Round results
+		newRound = None
+		winner_user = None
+		tagger = round.tagger
+
+		# Hold users for next round
 		hold_master = None
 		hold_puppet = None
 
@@ -243,6 +303,9 @@ class Round:
 
 		# Master wins
 		if winner == 'master':
+			winner_user = round.master
+			print('Winner: ' + str(round.master) + '\tRole: Master')
+
 			round.master.message('You win!', 'Congrats! You are victorious and will remain the Master for another round' +
 								message_footer)
 			round.puppet.message('You lost :(', 'Too bad, so sad. Better luck next time kiddo' +
@@ -253,17 +316,20 @@ class Round:
 			mess_body = 'Phrase: ' + round.phrase + '\n\nPuppet: ' + str(round.puppet) + '\n\n' +\
 						'\n\nThe Master will remain as the Master for the next round. A new Puppet will be selected now.' +\
 						message_footer
-			notifyUsers(mess_subj, mess_body)
+			round.notifyUsers(mess_subj, mess_body)
 
 			# If the Master wins, they remian the master and a new Puppet is selected
 			hold_master = round.master
-			hold_puppet = round.game.getRandomUser('puppet')
+			hold_puppet = round.getRandomUser('puppet')
 
 			while str(hold_puppet) == str(hold_master):
-				hold_puppet = round.game.getRandomUser('puppet')
+				hold_puppet = round.getRandomUser('puppet')
 
 		# Puppet wins
 		if winner == 'puppet':
+			winner_user = round.puppet
+			print('Winner: ' + str(round.puppet) + '\tRole: Puppet')
+
 			round.puppet.message('You win!', 'Congrats! You are victorious and will become the Master for the next round' +
 								message_footer)
 			round.master.message('You lost :(', 'Too bad, so sad. Better luck next time kiddo' +
@@ -274,33 +340,36 @@ class Round:
 			mess_body = ("Phrase: " + round.phrase + "\n\nMaster: " + str(round.master) +
 						 '\n\nThe Puppet will become the Master for the next round. A new Puppet will be selected now.' +
 						 message_footer)
-			notifyUsers(mess_subj, mess_body)
+			round.notifyUsers(mess_subj, mess_body)
 
 			# If the Puppet wins, they become the Master for the next round and a new Puppet is selected
 			hold_master = round.puppet
-			hold_puppet = round.game.getRandomUser('puppet')
+			hold_puppet = round.getRandomUser('puppet')
 
 			while str(hold_puppet) == str(hold_master):
-				hold_puppet = round.game.getRandomUser('puppet')
+				hold_puppet = round.getRandomUser('puppet')
 
 		# Create next round
-		round.game.current_round = Round(round.game, hold_master, hold_puppet)
+		newRound = Round(round.game, hold_master, hold_puppet)
+		return [newRound, winner_user, winner, tagger]
 
 	def runRound(round):
 		while True:
 			# Catch disconnect errors
 			try:
 				# Stream of comments from target subreddit
-				for comment in reddit.subreddit('edefinition').stream.comments(skip_existing=True, pause_after=1):
+				for comment in reddit.subreddit('test').stream.comments(skip_existing=True, pause_after=1):
 
 					# If there are no new comments, check PMs
 					if comment == None:
-						round.game.readPMs()
+						round.readPMs()
 						continue
 
 					# Check for user opt-in
 					if ("!you're it" in comment.body or "!you’re it" in comment.body or "!youre it" in comment.body):
-						round.handleTag(comment)
+						result = round.handleTag(comment)
+						if (result != None):
+							return round.endRound(result)
 
 					# Check if round has been inactive for < 24hrs
 					if round.active == False:
@@ -323,7 +392,7 @@ class Round:
 							# End the round if the Puppet has not used the phrase in 24hrs
 							if (round.end_time - datetime.now()).days < 0:
 								print('Times up')
-								round = round.endRound('master')
+								return endRound('master')
 
 							# Check if comment is from the Puppet
 							elif str(comment.author).lower() == str(round.puppet).lower():
@@ -373,11 +442,76 @@ class Round:
 
 							# If the round is past the end time, then the Puppet wins the round
 							if datetime.now() > round.end_time:
-								round = round.endRound('puppet')
+								return endRound('puppet')
 
 			except (prawcore.exceptions.ResponseException, prawcore.exceptions.RequestException):
 				print('Error connecting to servers. Sleeping for 1 min')
 				time.sleep(60)
+
+	# Check inbox for messages to process
+	def readPMs(round):
+		messages = reddit.inbox.unread()
+
+		for message in messages:
+			# Message from Master or Puppet
+			if message.body.startswith('!'):
+				message_words = message.body.split()
+				command = message_words[0]
+				author = str(message.author)
+				print('User: ' + author + '\tCommand: ' + command)
+
+				# Puppet/Master specific commands
+				if message.author == round.puppet or message.author == round.master:
+					if command.lower() == '!setphrase' and message.author == round.master:
+						# Check if the phrase has already been place
+						if round.phrase != None:
+							round.master.message(
+								'Phrase rejected', 'The phrase has already been set for this round.\n\nPhrase: ' + round.phrase +
+								message_footer)
+							message.mark_read()
+							print('Phrase rejected: Phrase already set')
+							continue
+
+						# Check if the phrase is too long
+						elif len(message_words) > 4:
+							round.master.message('Phrase rejected', 'The phrase is longer than 3 words.\n\nPhrase: ' + round.phrase +
+												'\n\nNumber of words: ' + str(len(message_words - 1)) +
+												message_footer)
+
+							message.mark_read()
+							print('Phrase rejected: Phrase to long\nPhrase: ' + message.body[11:])
+							continue
+						# Check if the phrase contains a user mention
+						elif ("u/" in message.body):
+							round.master.message("Phrase rejected", "The phrase cannot contain a user mention.\n\n" +
+												"Phrase: " + round.phrase +
+												message_footer)
+
+						# Check that both Master and Puppet have accepted their roles
+						elif round.master_accepted and round.puppet_accepted:
+							round.setPhrase(message.body[11:])
+							message.mark_read()
+							print('Phrase accepted\nPhrase: ' + message.body[11:])
+							continue
+					# Accept role
+					if command.lower() == '!accept':
+						round.acceptRole(message.author)
+						message.mark_read()
+						continue
+					# Reject role
+					if command.lower() == '!reject':
+						round.rejectRole(message.author)
+						message.mark_read()
+						continue
+
+				elif str(message.author) in opt_in_users:
+					if command == "!opt-out":
+						game.optOut(str(message.author))
+						message.reply("Opt-out", "You have opted-out of Tag. If you wish to opt-in later, just leave a " +
+									  "comment with '!you're it' in it and you will automatically opt-in to the round again." +
+									  message_footer)
+
+				print('\n')
 
 
 
