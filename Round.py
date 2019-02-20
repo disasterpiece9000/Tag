@@ -36,7 +36,7 @@ class Round:
 				hold_puppet = round.getRandomUser('puppet')
 
 			round.master = hold_master
-			round.puppet = hold_puppet
+			round.puppet = hold_puppet 
 
 		# Set users if passed in constructor
 		else:
