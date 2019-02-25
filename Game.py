@@ -232,7 +232,7 @@ class Game:
 	def makeScore(game, comment, winner):
 		permalink = comment.permalink
 		post_header = "#[Most recent round](" + permalink + ")" + "\n\n#Current Leader - "
-		table_header = "|Username|Last Round|Score|\n|:-|:-|:-|\n"
+		table_header = "|Username|Last Round Victory|Score|\n|:-|:-|:-|\n"
 		table_body = ""
 		leader = ""
 		top_score = 0
@@ -245,7 +245,7 @@ class Game:
 
 			# Last Round Victory
 			if username == str(winner):
-				row += permalink + "|"
+				row += + "https://www.reddit.com" + permalink + "|"
 			else:
 				row += game.scoreboard[username]["last_round"] + "|"
 
