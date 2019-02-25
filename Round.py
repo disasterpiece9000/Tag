@@ -362,7 +362,7 @@ class Round:
 			# Catch disconnect errors
 			try:
 				# Stream of comments from target subreddit
-				for comment in reddit.subreddit('test').stream.comments(skip_existing=True, pause_after=1):
+				for comment in reddit.subreddit('edefinition').stream.comments(skip_existing=True, pause_after=1):
 
 					# If there are no new comments, check PMs
 					if comment == None:
