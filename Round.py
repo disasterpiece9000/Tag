@@ -23,12 +23,14 @@ class Round:
 		round.game = game
 
 		# Get opted-in user list
-		round.opt_in_DB = TinyDB("opt-in.json")
+		round.opt_in_DB = TinyDB("player_data.json")
 		round.opt_in_users = round.readOptIn()
 
 		# Initial Master and Puppet
-		if (master == None and puppet == None):
+		if (master == None):
 			hold_master = round.getRandomUser('master')
+
+		if (puppet == None):
 			hold_puppet = round.getRandomUser('puppet')
 
 			# Check that a user wasn't selected for both roles
@@ -95,7 +97,7 @@ class Round:
 	# Handle user opt-in
 	def addOptIn(round, username):
 		round.opt_in_users.append(username)
-		round.opt_in_DB.insert({'username': username})
+		round.opt_in_DB.insert({'username': username, "last_round": "", "score": 0})
 
 	# Remove a user from the opt-in list
 	def optOut(round, username):
@@ -267,7 +269,7 @@ class Round:
 							message_footer)
 
 				print("User guessed correctly:" + str(comment.author))
-				round.tagger = comment.author
+				round.tagger = str(comment.author)
 				return ("master")
 			# Incorrect guess
 			else:
@@ -282,6 +284,9 @@ class Round:
 
 	# Notify all users about the results of the round and initalize the next round
 	def endRound(round, winner):
+		# Scoreboard post
+		scoreboard_post = reddit.submission(id="at4ywm")
+
 		# Round results
 		newRound = None
 		winner_user = None
@@ -349,9 +354,8 @@ class Round:
 			while str(hold_puppet) == str(hold_master):
 				hold_puppet = round.getRandomUser('puppet')
 
-		# Create next round
-		newRound = Round(round.game, hold_master, hold_puppet)
-		return [newRound, winner_user, winner, tagger]
+		# Return round results
+		return [round, hold_master, hold_puppet, winner_user, winner, tagger]
 
 	def runRound(round):
 		while True:
@@ -367,9 +371,9 @@ class Round:
 
 					# Check for user opt-in
 					if ("!you're it" in comment.body or "!you’re it" in comment.body or "!youre it" in comment.body):
-						result = round.handleTag(comment)
-						if (result != None):
-							return round.endRound(result)
+						winner = round.handleTag(comment)
+						if (winner != None):
+							return winner
 
 					# Check if round has been inactive for < 24hrs
 					if round.active == False:
@@ -392,7 +396,7 @@ class Round:
 							# End the round if the Puppet has not used the phrase in 24hrs
 							if (round.end_time - datetime.now()).days < 0:
 								print('Times up')
-								return endRound('master')
+								return 'master'
 
 							# Check if comment is from the Puppet
 							elif str(comment.author).lower() == str(round.puppet).lower():
@@ -414,7 +418,6 @@ class Round:
 										# Notify the Master and Puppet that the comment was identified by the bot
 										round.target_comment = comment.id
 										round.phrase_permalink = comment.permalink
-										round.tagger = str(comment.author)
 
 										round.puppet.message(
 											'Phrase identified', '[Comment](' + comment.permalink + '): ' + comment.body +
@@ -442,7 +445,7 @@ class Round:
 
 							# If the round is past the end time, then the Puppet wins the round
 							if datetime.now() > round.end_time:
-								return endRound('puppet')
+								return 'puppet'
 
 			except (prawcore.exceptions.ResponseException, prawcore.exceptions.RequestException):
 				print('Error connecting to servers. Sleeping for 1 min')
