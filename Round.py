@@ -14,7 +14,7 @@ reddit = praw.Reddit('SentimentBot')
 message_footer = "\n\n**This is an automated message**" +\
 				"\n\n-----\n\n[View the rules here](https://github.com/disasterpiece9000/Tag)" +\
 				" | [How to opt-in](https://www.reddit.com/user/shimmyjimmy97/comments/alt7e8/how_to_optin_to_tag/)" +\
-				" | [Contact the dev](https://www.reddit.com/message/compose/?to=shimmyjimmy97)"
+				" | [Scoreboard](https://www.reddit.com/r/edefinition/comments/at4ywm/tag_scoreboard/)"
 
 # Round object
 class Round:
