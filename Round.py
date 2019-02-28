@@ -165,7 +165,7 @@ class Round:
 
 	# Find a new user to fill the role
 	def rejectRole(round, user):
-		print('User: ' + str(user) + '\nRejected Role: Puppet')
+		print('User: ' + str(user) + '\nRejected Role')
 
 		if user == round.master and round.master_accepted == False:
 			hold_master = round.game.getRandomUser('master')
@@ -232,7 +232,7 @@ class Round:
 	def handleTag(round, comment):
 		# If the user placed a guess and isn't opted-in then add them to opt-in
 		if str(comment.author) not in round.opt_in_users:
-			addOptIn(str(comment.author))
+			round.addOptIn(str(comment.author))
 			comment.reply("You have just opted-in to Tag. If you would like to opt-out then send /u/shimmyjimmy a PM with !opt-out as the body." +
 						message_footer)
 
@@ -507,9 +507,9 @@ class Round:
 						message.mark_read()
 						continue
 
-				elif str(message.author) in opt_in_users:
+				elif str(message.author) in round.opt_in_users:
 					if command == "!opt-out":
-						game.optOut(str(message.author))
+						round.optOut(str(message.author))
 						message.reply("Opt-out", "You have opted-out of Tag. If you wish to opt-in later, just leave a " +
 									  "comment with '!you're it' in it and you will automatically opt-in to the round again." +
 									  message_footer)

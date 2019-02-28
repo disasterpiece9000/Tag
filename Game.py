@@ -33,7 +33,7 @@ class Game:
 		game.master_wins = 0
 
 		# Create initial Round object
-		game.current_round = Round(game)
+		game.current_round = Round(game, reddit.redditor("UnpopularCrayon"), reddit.redditor("cuttimecowboy"))
 		game.current_master = game.current_round.master
 		game.current_puppet = game.current_round.puppet
 		game.runGame()
