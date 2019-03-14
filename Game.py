@@ -10,7 +10,7 @@ from Round import Round
 
 
 # PRAW instance
-reddit = praw.Reddit('SentimentBot')
+reddit = praw.Reddit('Tag')
 
 # TinyDB Querry object
 find_stuff = Query()
@@ -33,7 +33,7 @@ class Game:
 		game.master_wins = 0
 
 		# Create initial Round object
-		game.current_round = Round(game, reddit.redditor("UnpopularCrayon"), reddit.redditor("cuttimecowboy"))
+		game.current_round = Round(game, master=reddit.redditor("MasterofLinking"), puppet=reddit.redditor("olderkj"))
 		game.current_master = game.current_round.master
 		game.current_puppet = game.current_round.puppet
 		game.runGame()
@@ -245,9 +245,9 @@ class Game:
 
 			# Last Round Victory
 			if username == str(winner):
-				row += + "https://www.reddit.com" + permalink + "|"
+				row += ("https://www.reddit.com" + permalink + "|")
 			else:
-				row += game.scoreboard[username]["last_round"] + "|"
+				row += (game.scoreboard[username]["last_round"] + "|")
 
 			# Score
 			score = game.scoreboard[username]['score']

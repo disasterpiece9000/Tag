@@ -3,12 +3,13 @@ import prawcore
 import sys
 import time
 import random
+import string
 from tinydb import TinyDB, Query
 from datetime import datetime, date, timedelta
 from dateutil import relativedelta
 
 # PRAW instance
-reddit = praw.Reddit('SentimentBot')
+reddit = praw.Reddit('Tag')
 
 # Automated message footer
 message_footer = "\n\n**This is an automated message**" +\
@@ -29,6 +30,8 @@ class Round:
 		# Initial Master and Puppet
 		if (master == None):
 			hold_master = round.getRandomUser('master')
+		else:
+			hold_master = master
 
 		if (puppet == None):
 			hold_puppet = round.getRandomUser('puppet')
@@ -36,14 +39,12 @@ class Round:
 			# Check that a user wasn't selected for both roles
 			while hold_master == hold_puppet:
 				hold_puppet = round.getRandomUser('puppet')
-
-			round.master = hold_master
-			round.puppet = hold_puppet 
-
-		# Set users if passed in constructor
 		else:
-			round.master = master
-			round.puppet = puppet
+			hold_puppet = puppet
+			
+
+		round.master = hold_master
+		round.puppet = hold_puppet
 
 		# Offer roles
 		round.offerRole(round.master)
@@ -179,10 +180,10 @@ class Round:
 			print('User: ' + str(user) + '\nRejected Role: Master')
 
 		if user == round.puppet and round.puppet_accepted == False:
-			hold_puppet = round.game.getRandomUser('puppet')
+			hold_puppet = round.getRandomUser('puppet')
 
 			while str(hold_puppet) == str(round.master):
-				hold_puppet = round.game.getRandomUser('puppet')
+				hold_puppet = round.getRandomUser('puppet')
 
 			round.puppet = hold_puppet
 			round.offerRole(round.puppet)
@@ -403,7 +404,10 @@ class Round:
 								print('Comment from puppet')
 
 								# Check if the phrase is in the comment
-								if round.phrase.lower() in comment.body.lower():
+								tr = str.maketrans("", "", string.punctuation)
+								round_phrase = round.phrase.lower().translate(tr)
+								comment_body = comment.body.lower().translate(tr)
+								if round_phrase in comment_body:
 									print("Phrase in comment")
 									post = comment.submission
 									post_time = post.created_utc
