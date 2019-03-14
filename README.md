@@ -10,13 +10,15 @@ If the Puppet's comment is correctly tagged by a user, then the Master wins and 
 * The phrase can be no longer than 3 words
 * Both roles have 24 hours to accept their role before it is given to a new user
 * Once both roles have accepted and the Master submits their phrase, the Puppet has 24 hours to use the phrase
-* The Puppet's comment must be made on a post that was created after the round started
+* The Puppet's comment must be made on a post that was created 3 hours before the round started or later
 * If the Puppet doesn't use the phrase within 24 hours of it being set, then the Master wins by default
+* When the Puppet uses the phrase, the bot will ignore case and punctuation
+* If the master wins 3 consecutive rounds, they are automatically replaced
 
 ## Scoreboard:
 Tag now has a scoring system to keep things a little more competitive. Here are the events that reward users with points:
 * **Tagger** - The user who correctly tags the Puppet's comment is awarded 50pts
 * **Puppet** - If the Puppet's comment goes unnoticed, they are awarded 100pts and become the Master for the next round
-* **Master** - The master can remain in their role for, at most, 3 consecutive rounds. Each round rewards more points than the last. The first win rewards 25pts, the second rewards 50pts, and the third win rewards 100pts.
+* **Master** - Each consecutive round rewards more points than the last. The first win rewards 25pts, the second rewards 50pts, and the third win rewards 100pts.
 
 ### Created by /u/shimmyjimmy97
