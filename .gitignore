@@ -3,5 +3,4 @@ praw.ini
 opt-in
 massPM.py
 *.json
-*.json
 *.pyc
