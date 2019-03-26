@@ -33,7 +33,7 @@ class Game:
 		game.master_wins = 0
 
 		# Create initial Round object
-		game.current_round = Round(game, master=reddit.redditor("MasterofLinking"), puppet=reddit.redditor("olderkj"))
+		game.current_round = Round(game)
 		game.current_master = game.current_round.master
 		game.current_puppet = game.current_round.puppet
 		game.runGame()
@@ -139,7 +139,7 @@ class Game:
 	def getReport(game, winner, winner_role, tagger):
 		# If the phrase was never set change it to display that info
 		if game.current_round.phrase == None:
-			game.current_round.phrase = "Phrase not placed"
+			game.current_round.phrase = " - Phrase not placed bt Master"
 
 		elif game.current_round.phrase_permalink == None:
 			game.current_round.phrase += " - Phrase not palced by Puppet"
@@ -245,7 +245,7 @@ class Game:
 
 			# Last Round Victory
 			if username == str(winner):
-				row += ("https://www.reddit.com" + permalink + "|")
+				row += (permalink + "|")
 			else:
 				row += (game.scoreboard[username]["last_round"] + "|")
 

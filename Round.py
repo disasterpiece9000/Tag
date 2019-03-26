@@ -169,10 +169,10 @@ class Round:
 		print('User: ' + str(user) + '\nRejected Role')
 
 		if user == round.master and round.master_accepted == False:
-			hold_master = round.game.getRandomUser('master')
+			hold_master = round.getRandomUser('master')
 
 			while str(hold_master) == str(round.puppet):
-				hold_master = round.game.getRandomUser('master')
+				hold_master = round.getRandomUser('master')
 
 			round.master = hold_master
 			round.offerRole(round.master)
@@ -421,7 +421,7 @@ class Round:
 
 										# Notify the Master and Puppet that the comment was identified by the bot
 										round.target_comment = comment.id
-										round.phrase_permalink = comment.permalink
+										round.phrase_permalink = "https://www.reddit.com" + comment.permalink
 
 										round.puppet.message(
 											'Phrase identified', '[Comment](' + comment.permalink + '): ' + comment.body +
