@@ -13,9 +13,9 @@ reddit = praw.Reddit('Tag')
 
 # Automated message footer
 message_footer = "\n\n**This is an automated message**" +\
-				"\n\n-----\n\n[View the rules here](https://github.com/disasterpiece9000/Tag)" +\
+				"\n\n-----\n\n[View the rules](https://github.com/disasterpiece9000/Tag)" +\
 				" | [How to opt-in](https://www.reddit.com/user/shimmyjimmy97/comments/alt7e8/how_to_optin_to_tag/)" +\
-				" | [Scoreboard](https://www.reddit.com/r/edefinition/comments/at4ywm/tag_scoreboard/)"
+				" | [Scoreboard](https://www.reddit.com/r/edefinition/comments/blubkc/game_1_scoreboard/)"
 
 # Round object
 class Round:
@@ -194,7 +194,8 @@ class Round:
 
 	# Set the phrase provided by the Master and notify users about the next stage of the round
 	def setPhrase(round, phrase):
-		round.phrase = phrase
+		tr = str.maketrans("", "", string.punctuation)
+		round.phrase = phrase.lower().translate(tr)
 		# The time the phrase was set
 		round.start_time = datetime.now()
 		# The time the round will end (24hrs after the start time)
@@ -405,9 +406,8 @@ class Round:
 
 								# Check if the phrase is in the comment
 								tr = str.maketrans("", "", string.punctuation)
-								round_phrase = round.phrase.lower().translate(tr)
 								comment_body = comment.body.lower().translate(tr)
-								if round_phrase in comment_body:
+								if round.phrase in comment_body:
 									print("Phrase in comment")
 									post = comment.submission
 									post_time = post.created_utc

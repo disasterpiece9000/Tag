@@ -27,7 +27,7 @@ class Game:
 		# Read current scoreboard
 		game.scoreboardDB = TinyDB("player_data.json")
 		game.scoreboard = game.readScore()
-		game.scoreboard_post = reddit.submission(id="at4ywm")
+		game.scoreboard_post = reddit.submission(id="blubkc")
 
 		# Count master consecutive wins
 		game.master_wins = 0
@@ -245,7 +245,7 @@ class Game:
 
 			# Last Round Victory
 			if username == str(winner):
-				row += (permalink + "|")
+				row += ("[Link](" + permalink + ") |")
 			else:
 				row += (game.scoreboard[username]["last_round"] + "|")
 
