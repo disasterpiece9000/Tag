@@ -1,6 +1,6 @@
 import praw
 import prawcore
-import sys
+import re
 import time
 import random
 import string
@@ -145,11 +145,19 @@ class Round:
     def acceptRole(round, user):
         if user == round.master and round.master_accepted == False:
             round.master_accepted = True
-            
-            round.master.message(
-                'Role accepted: Master',
-                'You will recieve a message asking for a phrase once the Puppet has also accepted their role.' +
-                message_footer)
+
+            # If both users have accepted then the master is asked to provide the phrase
+            if round.puppet_accepted:
+                round.master.message('Please set the phrase for the round to begin',
+                                     'Reply to this PM with !setphrase as the first text in the body, ' +
+                                     'followed by the word or phrase of your choice. The phrase can be no longer than 3 words and it cannot contain any user mentions. ' +
+                                     'You will recieve a confirmation message once it has been successfully set.' +
+                                     message_footer)
+            else:
+                round.master.message(
+                    'Role accepted: Master',
+                    'You will recieve a message asking for a phrase once the Puppet has also accepted their role.' +
+                    message_footer)
             
             print('User: ' + str(user) + '\nAccepted Role: Master')
         elif user == round.puppet and round.puppet_accepted == False:
@@ -160,16 +168,16 @@ class Round:
                 'You will recieve a message informing you of the phrase once the Master has accepted their ' +
                 'role and set a phrase.' +
                 message_footer)
+
+            # If both users have accepted then the master is asked to provide the phrase
+            if round.puppet_accepted == True and round.master_accepted == True:
+                round.master.message('Please set the phrase for the round to begin',
+                                     'Reply to this PM with !setphrase as the first text in the body, ' +
+                                     'followed by the word or phrase of your choice. The phrase can be no longer than 3 words and it cannot contain any user mentions. ' +
+                                     'You will recieve a confirmation message once it has been successfully set.' +
+                                     message_footer)
             
             print('User accepted role: ' + str(user))
-        
-        # If both users have accepted then the master is asked to provide the phrase
-        if round.puppet_accepted == True and round.master_accepted == True:
-            round.master.message('Please set the phrase for the round to begin',
-                                 'Reply to this PM with !setphrase as the first text in the body, ' +
-                                 'followed by the word or phrase of your choice. The phrase can be no longer than 3 words and it cannot contain any user mentions. ' +
-                                 'You will recieve a confirmation message once it has been successfully set.' +
-                                 message_footer)
     
     # Find a new user to fill the role
     def rejectRole(round, user):
@@ -212,18 +220,18 @@ class Round:
         round.master.message('Let the rounds begin',
                              'Phrase: ' + round.phrase + '\n\nThis phrase was accepted. The Puppet has been ' +
                              'notified and the clock is now ticking. If the comment is not identified in 24 hours, then they will win.' +
-                             'The Puppet must leave the phrase under a post that was created 3 hours before the round started or later\n\n' +
+                             'The Puppet must leave the phrase under a post that was created 3 hours before this PM was sent or later\n\n' +
                              'Posts created after ' + (round.start_time - timedelta(hours=3)).strftime(
-                                 "%m/%d/%Y, %H:%M:%S") + ' EST are valid' +
+                                 "%m/%d/%Y, %H:%M:%S") + ' UTC are valid' +
                              '\n\nEnd time: ' + round.end_time.strftime("%m/%d/%Y, %H:%M:%S") + ' EST' +
                              message_footer)
         
         round.puppet.message('Let the rounds begin',
                              'Phrase: ' + round.phrase + '\n\nThis phrase was accepted. The Master has been ' +
                              'notified and the clock is now ticking. If the comment is not identified in 24 hours, then you will win.' +
-                             'You must leave the phrase under a post that was created 3 hours before the round started or later\n\n' +
+                             'You must leave the phrase in a comment under a post that was created 3 hours before this PM was sent or later\n\n' +
                              'Posts created after ' + (round.start_time - timedelta(hours=3)).strftime(
-                                 "%m/%d/%Y, %H:%M:%S") + ' EST are valid' +
+                                 "%m/%d/%Y, %H:%M:%S") + ' UTC are valid' +
                              '\n\nEnd time: ' + round.end_time.strftime("%m/%d/%Y, %H:%M:%S") + ' EST' +
                              message_footer)
         
@@ -235,7 +243,7 @@ class Round:
                 'will be sent with details of the round.' +
                 'The Puppet must leave the phrase under a post that was created 3 hours before the round started or later\n\n' +
                 'Posts created after ' + (round.start_time - timedelta(hours=3)).strftime(
-            "%m/%d/%Y, %H:%M:%S") + ' EST are valid' +
+            "%m/%d/%Y, %H:%M:%S") + ' UTC are valid' +
                 '\n\nEnd time: ' + round.end_time.strftime("%m/%d/%Y, %H:%M:%S") + ' EST' +
                 message_footer)
         
@@ -267,9 +275,13 @@ class Round:
             
             round.used_guess.append(comment.author)
             print("User is Puppet or Master: " + str(comment.author))
+            
+        elif not round.active:
+            comment.reply("The round has not yet started. This tag will not be counted. Please standby until you "
+                          "receive the start-of-round PM.")
         
         # If the phrase hasn't been placed yet, then always return incorrect guess
-        elif round.phrase_placed == False:
+        elif not round.phrase_placed:
             comment.reply("Not it. This comment does not contain the phrase" +
                           message_footer)
             
@@ -277,7 +289,7 @@ class Round:
             print("User guessed before phrase was placed: " + str(comment.author))
         
         # If the phrase is placed, check if it was left under the Puppet's comment
-        elif round.phrase_placed == True:
+        elif round.phrase_placed:
             # Correct guess: The Master wins the round
             if round.target_comment == comment.parent_id[3:]:
                 comment.reply(
@@ -296,9 +308,9 @@ class Round:
                 print("User guessed incorrectly: " + str(comment.author))
         
         print('\n')
-        return (None)
+        return None
     
-    # Notify all users about the results of the round and initalize the next round
+    # Notify all users about the results of the round and initialize the next round
     def endRound(round, winner):
         # Scoreboard post
         scoreboard_post = reddit.submission(id="at4ywm")
@@ -313,11 +325,11 @@ class Round:
         hold_puppet = None
         
         # If the phrase was never set change it to display that info
-        if round.phrase == None:
+        if round.phrase is None:
             round.phrase = "Phrase not placed"
         
-        elif round.phrase_permalink == None:
-            round.phrase += " - Phrase not palced by Puppet"
+        elif round.phrase_permalink is None:
+            round.phrase += " - Phrase not placed by Puppet"
         
         else:
             round.phrase = '[' + round.phrase + '](' + round.phrase_permalink + ')'
@@ -388,7 +400,7 @@ class Round:
                         continue
                     
                     # Check for user opt-in
-                    if ("!you're it" in comment.body or "!you’re it" in comment.body or "!youre it" in comment.body):
+                    if re.search(r"!you[\W]?re\sit", comment.body):
                         winner = round.handleTag(comment)
                         if (winner != None):
                             return winner

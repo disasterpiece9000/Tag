@@ -200,6 +200,9 @@ class Game:
     
     # Update the scoreboard
     def update_score(game, winner, role, tagger):
+        # Re-read scoreboard
+        game.scoreboard = game.read_score()
+        
         # Master wins
         if role == "master":
             # Get score increment based on number of consecutive wins
