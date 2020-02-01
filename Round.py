@@ -129,16 +129,16 @@ class Round:
         
         if user == round.master:
             user.message('Would you like to play a round?',
-                         'You have been randomly selected to play the role of Master in this round of Tag. ' +
+                         'You have been selected to play the role of Master in this round of Tag. ' +
                          'To accept this invitation, reply to this message with !accept. To reject this invitation, ' +
-                         'reply with !reject. If no response is recieved within 24 hours, another user will be selected.' +
+                         'reply with !reject. If no response is received within 24 hours, another user will be selected.' +
                          message_footer)
         
         if user == round.puppet:
             user.message('Would you like to play a round?',
-                         'You have been randomly selected to play the role of Puppet in this round of Tag. ' +
+                         'You have been selected to play the role of Puppet in this round of Tag. ' +
                          'To accept this invitation, reply to this message with !accept. To reject this invitation, ' +
-                         'reply with !reject. If no response is recieved within 24 hours, another user will be selected. ' +
+                         'reply with !reject. If no response is received within 24 hours, another user will be selected. ' +
                          message_footer)
     
     # Respond to the accepted role and inform the user of the next stage of the round
@@ -150,13 +150,15 @@ class Round:
             if round.puppet_accepted:
                 round.master.message('Please set the phrase for the round to begin',
                                      'Reply to this PM with !setphrase as the first text in the body, ' +
-                                     'followed by the word or phrase of your choice. The phrase can be no longer than 3 words and it cannot contain any user mentions. ' +
-                                     'You will recieve a confirmation message once it has been successfully set.' +
+                                     'followed by the word or phrase of your choice. The phrase can be no longer than '
+                                     '3 words and it cannot contain any user mentions. ' +
+                                     'You have 24hrs to set it and will receive a confirmation message once it has '
+                                     'been successfully set.' +
                                      message_footer)
             else:
                 round.master.message(
                     'Role accepted: Master',
-                    'You will recieve a message asking for a phrase once the Puppet has also accepted their role.' +
+                    'You will receive a message asking for a phrase once the Puppet has also accepted their role.' +
                     message_footer)
             
             print('User: ' + str(user) + '\nAccepted Role: Master')
@@ -165,16 +167,18 @@ class Round:
             
             round.puppet.message(
                 'Role accepted: Puppet',
-                'You will recieve a message informing you of the phrase once the Master has accepted their ' +
+                'You will receive a message informing you of the phrase once the Master has accepted their ' +
                 'role and set a phrase.' +
                 message_footer)
 
             # If both users have accepted then the master is asked to provide the phrase
-            if round.puppet_accepted == True and round.master_accepted == True:
+            if round.puppet_accepted is True and round.master_accepted == True:
                 round.master.message('Please set the phrase for the round to begin',
                                      'Reply to this PM with !setphrase as the first text in the body, ' +
-                                     'followed by the word or phrase of your choice. The phrase can be no longer than 3 words and it cannot contain any user mentions. ' +
-                                     'You will recieve a confirmation message once it has been successfully set.' +
+                                     'followed by the word or phrase of your choice. The phrase can be no longer than '
+                                     '3 words and it cannot contain any user mentions. ' +
+                                     'You have 24hrs to set it and will receive a confirmation message once it has '
+                                     'been successfully set.' +
                                      message_footer)
             
             print('User accepted role: ' + str(user))
@@ -183,7 +187,7 @@ class Round:
     def rejectRole(round, user):
         print('User: ' + str(user) + '\nRejected Role')
         
-        if user == round.master and round.master_accepted == False:
+        if user == round.master and round.master_accepted is False:
             hold_master = round.getRandomUser('master')
             
             while str(hold_master) == str(round.puppet):
@@ -194,7 +198,7 @@ class Round:
             
             print('User: ' + str(user) + '\nRejected Role: Master')
         
-        if user == round.puppet and round.puppet_accepted == False:
+        if user == round.puppet and round.puppet_accepted is False:
             hold_puppet = round.getRandomUser('puppet')
             
             while str(hold_puppet) == str(round.master):
@@ -241,7 +245,7 @@ class Round:
                 'The phrase has been set and the Puppet must now place it somewhere in the subreddit in the next 24 hours. ' +
                 'After it is placed, you all will have another 24 hours to find it. Once the round is over another PM ' +
                 'will be sent with details of the round.' +
-                'The Puppet must leave the phrase under a post that was created 3 hours before the round started or later\n\n' +
+                'The Puppet must leave the phrase under a post that was created 3 hours before this PM was sent or later\n\n' +
                 'Posts created after ' + (round.start_time - timedelta(hours=3)).strftime(
             "%m/%d/%Y, %H:%M:%S") + ' UTC are valid' +
                 '\n\nEnd time: ' + round.end_time.strftime("%m/%d/%Y, %H:%M:%S") + ' EST' +
@@ -255,7 +259,8 @@ class Round:
         if str(comment.author) not in round.opt_in_users:
             round.addOptIn(str(comment.author))
             comment.reply(
-                "You have just opted-in to Tag. If you would like to opt-out then send /u/shimmyjimmy a PM with !opt-out as the body." +
+                "You have just opted-in to Tag. If you would like to opt-out then send /u/shimmyjimmy97 a PM with "
+                "!opt-out as the body." +
                 message_footer)
             
             print("User has opted-in: " + str(comment.author))
@@ -263,7 +268,8 @@ class Round:
         # If user has already guessed this round, then always return incorrect guess
         if comment.author in round.used_guess:
             comment.reply(
-                "Not so fast. You have already tagged another user this round. Please wait until next round to try again!" +
+                "Not so fast. You have already tagged another comment this round. "
+                "Please wait until next round to try again!" +
                 message_footer)
             
             print("User has already guessed this round: " + str(comment.author))
@@ -410,11 +416,11 @@ class Round:
                         if (datetime.now() - round.day_initialized).days >= 1:
                             # Select a new user if the role has not been accepted
                             if round.puppet_accepted == False:
-                                round.puppet = round.game.getRandomUser('puppet')
+                                round.puppet = round.getRandomUser('puppet')
                                 round.offerRole(round.puppet)
                             
                             if round.master_accepted == False:
-                                round.master = round.game.getRandomUser('master')
+                                round.master = round.getRandomUser('master')
                                 round.offerRole(round.master)
                     
                     # Both users have accepted their roles and the phrase is set

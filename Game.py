@@ -246,9 +246,9 @@ class Game:
             
             # Last Round Victory
             if username == str(winner):
-                row += ("[Link](" + permalink + ") |")
+                row += ("[**Newest Round**](" + permalink + ") |")
             else:
-                row += (game.scoreboard[username]["last_round"] + "|")
+                row += ("[Link](" + game.scoreboard[username]["last_round"] + ") |")
             
             # Score
             score = game.scoreboard[username]['score']
