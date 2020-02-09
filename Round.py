@@ -521,7 +521,7 @@ class Round:
                         # Check if the phrase is too long
                         elif len(message_words) > 4:
                             round.master.message('Phrase rejected',
-                                                 'The phrase is longer than 3 words.\n\nPhrase: ' + round.phrase +
+                                                 'The phrase is longer than 3 words' +
                                                  '\n\nNumber of words: ' + str(len(message_words - 1)) +
                                                  message_footer)
                             
@@ -529,9 +529,8 @@ class Round:
                             print('Phrase rejected: Phrase to long\nPhrase: ' + message.body[11:])
                             continue
                         # Check if the phrase contains a user mention
-                        elif ("u/" in message.body):
-                            round.master.message("Phrase rejected", "The phrase cannot contain a user mention.\n\n" +
-                                                 "Phrase: " + round.phrase +
+                        elif "u/" in message.body:
+                            round.master.message("Phrase rejected", "The phrase cannot contain a user mention." +
                                                  message_footer)
                         
                         # Check that both Master and Puppet have accepted their roles
