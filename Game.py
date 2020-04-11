@@ -138,7 +138,7 @@ class Game:
             game.current_round.phrase = " - Phrase not placed bt Master"
         
         elif game.current_round.phrase_permalink is None:
-            game.current_round.phrase += " - Phrase not palced by Puppet"
+            game.current_round.phrase += " - Phrase not placed by Puppet"
         
         else:
             game.current_round.phrase = '[' + game.current_round.phrase + '](' + \
