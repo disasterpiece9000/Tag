@@ -7,7 +7,6 @@ import string
 from tinydb import TinyDB, Query
 from datetime import datetime, timedelta
 
-
 # PRAW instance
 reddit = praw.Reddit('Tag')
 
@@ -16,11 +15,11 @@ find_stuff = Query()
 
 # Automated message footer
 message_footer = ("\n\n**This is an automated message**" +
-                 "\n\n-----\n\n" +
-                 "[View the rules here](https://www.reddit.com/r/edefinition/comments/ejll1f/tag_rules/)" +
-                 " | [How to opt-in/out](https://www.reddit.com/r/edefinition/comments/ejll1f/tag_rules/" +
-                 "fcyqizq?utm_source=share&utm_medium=web2x)" +
-                 " | [Scoreboard](https://www.reddit.com/r/edefinition/comments/ejlnhv/tag_scoreboard/)")
+                  "\n\n-----\n\n" +
+                  "[View the rules here](https://www.reddit.com/r/edefinition/comments/ejll1f/tag_rules/)" +
+                  " | [How to opt-in/out](https://www.reddit.com/r/edefinition/comments/ejll1f/tag_rules/" +
+                  "fcyqizq?utm_source=share&utm_medium=web2x)" +
+                  " | [Scoreboard](https://www.reddit.com/r/edefinition/comments/ip3pit/tag_scoreboard/)")
 
 
 # Round object
@@ -120,7 +119,14 @@ class Round:
     def notifyUsers(round, subj, body):
         for username in round.opt_in_users:
             user = reddit.redditor(username)
-            user.message(subj, body)
+            
+            while True:
+                try:
+                    user.message(subj, body)
+                except:
+                    time.sleep(30)
+                    continue
+                break
     
     # Notify the user that they have been selected
     def offerRole(round, user):
@@ -145,7 +151,7 @@ class Round:
     def acceptRole(round, user):
         if user == round.master and round.master_accepted == False:
             round.master_accepted = True
-
+            
             # If both users have accepted then the master is asked to provide the phrase
             if round.puppet_accepted:
                 round.master.message('Please set the phrase for the round to begin',
@@ -170,7 +176,7 @@ class Round:
                 'You will receive a message informing you of the phrase once the Master has accepted their ' +
                 'role and set a phrase.' +
                 message_footer)
-
+            
             # If both users have accepted then the master is asked to provide the phrase
             if round.puppet_accepted is True and round.master_accepted == True:
                 round.master.message('Please set the phrase for the round to begin',
@@ -281,7 +287,7 @@ class Round:
             
             round.used_guess.append(comment.author)
             print("User is Puppet or Master: " + str(comment.author))
-            
+        
         elif not round.active:
             comment.reply("The round has not yet started. This tag will not be counted. Please standby until you "
                           "receive the start-of-round PM.")
@@ -319,7 +325,7 @@ class Round:
     # Notify all users about the results of the round and initialize the next round
     def endRound(round, winner):
         # Scoreboard post
-        scoreboard_post = reddit.submission(id="at4ywm")
+        scoreboard_post = reddit.submission(id="ip3pit")
         
         # Round results
         newRound = None
